@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Town | Minimal Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+   :root { --primary: #ff85a2; --secondary: #4a90e2; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #a0c7f3 0%, #e7b89d 100%); background-attachment: fixed; padding: 15px; }
+    .container { max-width: 1150px; margin: auto; }
+
+        
+
+        /* การ์ดแบบมินิมอล เน้นเส้นขอบบางๆ และเงาฟุ้งๆ */
+        .min-card {
+            background: #ffffff;
+            border: 1px solid #f0f0f0;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .min-card:hover {
+            border-color: #e2e8f0;
+            box-shadow: 0 20px 40px rgba(36, 27, 27, 0.03);
+            transform: translateY(-5px);
+        }
+
+        /* ปุ่มแบบ Minimal - เรียบง่ายแต่ชัดเจน */
+        .min-btn {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #000000;
+            border-bottom: 1px solid #201414;
+            padding-bottom: 4px;
+            transition: all 0.3s;
+        }
+
+        .min-card:hover .min-btn {
+            color: #5e8bcf;
+            border-color: #201414;
+        }
+
+        /* หัวข้อไล่เฉดสีแบบจางๆ ไม่ตะโกน */
+        .soft-gradient {
+            background: linear-gradient(to right, #000000, #807ef5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-6">
+
+    <div class="max-w-5xl w-full fade-in">
+        
+        <div class="text-center mb-24">
+            <h1 class="text-5xl font-extralight tracking-[0.2em] uppercase soft-gradient mb-4">
+                Time Town
+            </h1>
+            <div class="w-12 h-[1px] bg-gray-300 mx-auto mb-4"></div>
+     <p class="text-[10px] text-slate-400 tracking-[0.8em] uppercase font-bold italic">Service Directory</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <a href="web1/index.html" class="min-card p-12 rounded-2xl text-center">
+                <div class="text-4xl mb-8 opacity-60">📢</div>
+                <h2 class="text-lg font-normal mb-2 tracking-wide">ประกาศ</h2>
+                <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">ประกาศคูลดาวน์<br>และ บันทึกต่างๆ</p>
+                <span class="min-btn">Explore</span>
+            </a>
+
+            <a href="web2/index.html" class="min-card p-12 rounded-2xl text-center">
+                <div class="text-4xl mb-8 opacity-60">💰</div>
+                <h2 class="text-lg font-normal mb-2 tracking-wide">รายรับ รพ.</h2>
+                <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายรับ-จ่าย<br>และ รวมยอด</p>
+                <span class="min-btn">Explore</span>
+            </a>
+
+            <a href="web3/index.html" class="min-card p-12 rounded-2xl text-center">
+                <div class="text-4xl mb-8 opacity-60">☁️</div>
+                <h2 class="text-lg font-normal mb-2 tracking-wide">ทำเนียบหมอ</h2>
+               <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายชื่อหมอ<br>และ ข้อมูลเข้า-ออก</p>
+                <span class="min-btn">Explore</span>
+            </a>
+
+        </div>
+
+        <div class="mt-32 text-center">
+            <p class="text-[9px] text-gray-300 tracking-[0.4em] font-light uppercase">
+                Est. 2026 &bull; Time Town Project
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

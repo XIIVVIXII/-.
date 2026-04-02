@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายรับ รพ. - Clinic Master 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+<style>
+    :root { --primary: #ff85a2; --secondary: #4a90e2; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #8bbaf8 0%, #e0c3fc 100%); background-attachment: fixed; padding: 15px; }
+    .container { max-width: 1150px; margin: auto; }
+
+
+    .main-header { text-align: center; padding: 20px 0; margin-bottom: 10px; }
+    .main-header h1 { font-size: 50px; font-weight: 900; color: #fff; text-shadow: 3px 3px 0px var(--primary), 6px 6px 15px rgba(0,0,0,0.2); margin: 0; }
+
+
+    .nav-menu { display: flex; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; z-index: 1000; }
+    .nav-menu button { flex: 1; padding: 15px; border: none; border-radius: 20px; background: #fff; color: var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; font-weight: 900; font-size: 16px; transition: 0.3s; }
+    .nav-menu button.active { background: var(--primary); color: #fff; }
+
+
+    .page { display: none; animation: fadeIn 0.4s ease-out; }
+    .box { background: rgba(255,255,255,0.95); padding: 25px; border-radius: 35px; margin-bottom: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+    h3 { color: var(--primary); text-align: center; font-weight: 900; font-size: 28px; margin: 0 0 20px 0; }
+
+
+    /* ส่วนหัวของประวัติที่ปรับปรุงใหม่ */
+    .history-header { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; }
+    .history-header h3 { margin: 0; }
+
+
+    .u-input { width: 100%; height: 55px; font-size: 20px; font-weight: 900; border: 2px solid #eee; border-radius: 15px; text-align: center; margin-bottom: 12px; outline: none; font-family: 'Kanit'; background-color: white; color: #444; }
+   
+    /* ปรับแต่ง input date ให้เป็นสีชมพูตามต้องการ */
+    input[type="date"].pink-date {
+        color: var(--primary);
+        border: 2.5px solid var(--primary);
+        cursor: pointer;
+        padding: 5px 15px;
+    }
+
+
+    .bold-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .bold-table th { color: #333; font-size: 18px; font-weight: 900; padding: 15px 5px; border-bottom: 3px solid #ddd; background: #f9f9f9; text-align: center; vertical-align: middle; }
+    .bold-table td { padding: 15px 5px; border-bottom: 1px solid #eee; text-align: center; font-weight: 900; font-size: 19px; color: #222; word-wrap: break-word; vertical-align: middle; }
+   
+    .calc-in { width: 90%; height: 48px; font-size: 22px; font-weight: 900; border: 2.5px solid var(--primary); border-radius: 12px; text-align: center; background: #f0f4ff; outline: none; font-family: 'Kanit'; }
+    .res { color: var(--primary) !important; font-size: 22px !important; font-weight: 900 !important; }
+   
+    .mini-summary { background: #fff5f7; padding: 20px; border-radius: 0 0 35px 35px; margin: 0 -25px -25px -25px; border-top: 3px dashed var(--primary); }
+    .sum-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .sum-label { font-size: 22px; font-weight: 900; color: #222; }
+    .sum-val { font-size: 28px; font-weight: 900; color: var(--primary); }
+
+
+    .dashboard { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 20px 0; min-height: 260px; }
+    .stat-card { flex: 1; background: #fff; border-radius: 30px; padding: 15px; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; cursor: pointer; }
+    .stat-card.active { flex: 1.6; height: 230px; border: 3px solid var(--primary); box-shadow: 0 20px 40px rgba(255,133,162,0.25); transform: scale(1.05); }
+    .stat-value { color: #444; font-size: 30px; font-weight: 900; }
+    .active .stat-value { color: var(--secondary); font-size: 55px; }
+
+
+    .seller-item { display: flex; justify-content: space-between; padding: 18px 25px; background: #fff; border-radius: 20px; margin-bottom: 10px; font-size: 26px; font-weight: 900; }
+    .btn-del { color: red; border: 2px solid red; border-radius: 12px; padding: 8px 15px; background: white; font-weight: 900; cursor: pointer; transition: 0.2s; }
+    .btn-del:hover { background: red; color: white; }
+
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+</style>
+</head>
+<body>
+ 
+   
+
+<div class="container">
+    <div class="main-header"><h1>รายรับ รพ.</h1></div>
+
+
+    <div class="nav-menu">
+        <button id="nav-home" onclick="showPage('home')">บันทึก 📝</button>
+        <button id="nav-calc" onclick="showPage('calc')">ฟาร์ม/เหมือง 🌱</button>
+        <button id="nav-total" onclick="showPage('total')">รวมยอด 💰</button>
+        <button id="nav-history" onclick="showPage('history')">ประวัติ 📜</button>
+    </div>
+
+
+    <div id="home" class="page">
+        <div class="box" style="max-width: 500px; margin: auto;">
+            <h3>ลงบันทึกเคส</h3>
+            <input type="date" id="recordDate" class="u-input pink-date" onchange="syncDate(this.value)">
+            <select id="type" class="u-input" onchange="updateLive()">
+                <option value="เพน">เพน</option>
+                <option value="ศัลยกรรม">ศัลยกรรม</option>
+            </select>
+            <select id="buyer" class="u-input" onchange="updateLive()">
+                <option value="ประชาชน">ประชาชน</option>
+                <option value="21ˢᵗ [21ˢᵗ]">21ˢᵗ [21ˢᵗ]</option>
+                <option value="28GEN [28]">28GEN [28]</option>
+                <option value="1995 [IX95]">1995 [IX95]</option>
+                <option value="As Soon As Possible [A$AP]">As Soon As Possible [A$AP]</option>
+                <option value="ATLAS [A]">ATLAS [A]</option>
+                <option value="BADPORYOUNG [BAD]">BADPORYOUNG [BAD]</option>
+                <option value="Iconic [CON]">Iconic [CON]</option>
+                <option value="IDontgiveafuq [IDGF]">IDontgiveafuq [IDGF]</option>
+                <option value="JUST DO IT NO FAIR (JDIF)">JUST DO IT NO FAIR (JDIF)</option>
+                <option value="Dubaiboy [DBB]">Dubaiboy [DBB]</option>
+                <option value="Facelift [FL]">Facelift [FL]</option>
+                <option value="Dek Hud Doen (DHD)">Dek Hud Doen (DHD)</option>
+                <option value="LUCIASTYLE [LCS]">LUCIASTYLE [LCS]</option>
+                <option value="LAST NIGHT (LN)">LAST NIGHT (LN)</option>
+                <option value="Nompong [NP]">Nompong [NP]</option>
+                <option value="R RAI KON (RRK)">R RAI KON (RRK)</option>
+                <option value="Shelikenisaileow [SHE]">Shelikenisaileow [SHE]</option>
+                <option value="VARENTHAS [VRT]">VARENTHAS [VRT]</option>
+                <option value="Yaoguai [YG]">Yaoguai [YG]</option>
+            </select>
+            <select id="sellerSelect" class="u-input">
+                <option value="High">High</option>
+                <option value="Taichi">Taichi</option>
+                <option value="Cookie">Cookie</option>
+                <option value="Jaokha">Jaokha</option>
+                <option value="June">June</option>
+                <option value="SaSha">SaSha</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <input id="pQty" class="u-input" type="number" placeholder="แพ็ค" oninput="updateLive()">
+                <input id="sQty" class="u-input" type="number" placeholder="ชิ้น" oninput="updateLive()">
+            </div>
+            <div id="liveTotal" style="text-align:center; font-size:60px; font-weight:900; color:var(--primary); margin:15px 0;">0</div>
+            <button style="background:var(--primary); color:#fff; padding:20px; border:none; border-radius:20px; width:100%; font-weight:900; font-size:24px; cursor:pointer;" onclick="saveData()">บันทึกข้อมูล ✨</button>
+        </div>
+    </div>
+
+
+    <div id="calc" class="page">
+        <div class="box">
+            <h3>🌱 ฟาร์มหายนะ (x40)</h3>
+            <table class="bold-table">
+                <thead><tr><th style="width:25%">สินค้า</th><th style="width:15%">เรท</th><th style="width:20%">แพ็ค</th><th style="width:20%">ชิ้น</th><th style="width:20%">เงิน</th></tr></thead>
+                <tr class="f-item" data-rate="450"><td>พริก</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>กะหล่ำ</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>แครอท</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>ข้าว</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>ไข่มุก</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>แป้ง</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+            </table>
+            <div class="mini-summary">
+                <div class="sum-line"><span class="sum-label">📦 รวมจำนวน:</span><span class="sum-val" id="fQty">0</span></div>
+                <div class="sum-line"><span class="sum-label">💰 เงินฟาร์มรวม:</span><span class="sum-val" id="fMoney">0</span></div>
+            </div>
+        </div>
+
+
+        <div class="box">
+            <h3>⛏️ เหมืองหายนะ (x40)</h3>
+            <table class="bold-table">
+                <thead><tr><th style="width:25%">สินค้า</th><th style="width:15%">เรท</th><th style="width:20%">แพ็ค</th><th style="width:20%">ชิ้น</th><th style="width:20%">เงิน</th></tr></thead>
+                <tr class="m-item" data-rate="700"><td>Iron</td><td>700</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="m-item" data-rate="300"><td>Gold</td><td>300</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="m-item" data-rate="100"><td>Cop</td><td>100</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="m-item" data-rate="100"><td>Dim</td><td>100</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+            </table>
+            <div class="mini-summary">
+                <div class="sum-line"><span class="sum-label">📦 รวมจำนวน:</span><span class="sum-val" id="mQty">0</span></div>
+                <div class="sum-line"><span class="sum-label">💰 เงินเหมืองรวม:</span><span class="sum-val" id="mMoney">0</span></div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="total" class="page">
+        <div style="text-align:center; margin-bottom:15px;"><input type="date" id="dashDate" class="u-input pink-date" style="max-width:250px; border-radius:50px;" onchange="syncDate(this.value)"></div>
+        <div class="dashboard" id="mainDash">
+            <div class="stat-card" id="card-month" onclick="swapDash('month')"><div>รายเดือน</div><div class="stat-value" id="val-month">0</div></div>
+            <div class="stat-card active" id="card-day" onclick="swapDash('day')"><div>รายวัน</div><div class="stat-value" id="val-day">0</div></div>
+            <div class="stat-card" id="card-year" onclick="swapDash('year')"><div>รายปี</div><div class="stat-value" id="val-year">0</div></div>
+        </div>
+        <div class="box"><div id="sellerGrid"></div></div>
+    </div>
+
+
+    <div id="history" class="page">
+        <div class="box">
+            <div class="history-header">
+                <h3>📜</h3>
+                <input type="date" id="histDate" class="u-input pink-date" style="max-width:220px; margin-bottom:0; border-radius:50px;" onchange="syncDate(this.value)">
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="bold-table" style="width:100%; min-width:1100px;">
+                    <thead>
+                        <tr><th style="width:70px">ลำดับ</th><th style="width:150px">รายการ</th><th>คนซื้อ</th><th style="width:120px">ชิ้น</th><th style="width:200px">จำนวนเงิน</th><th style="width:150px">คนขาย</th><th style="width:100px">จัดการ</th></tr>
+                    </thead>
+                    <tbody id="histBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let sales = JSON.parse(localStorage.getItem("clinic_data_2026")) || [];
+    window.onload = () => { syncDate(new Date().toLocaleDateString('sv-SE')); showPage('home'); };
+
+
+    function syncDate(val) {
+        document.getElementById('recordDate').value = val;
+        document.getElementById('dashDate').value = val;
+        document.getElementById('histDate').value = val;
+        renderTotal(); renderHistory();
+    }
+
+
+    function showPage(p) {
+        document.querySelectorAll('.page').forEach(x => x.style.display = 'none');
+        document.querySelectorAll('.nav-menu button').forEach(b => b.classList.remove('active'));
+        document.getElementById(p).style.display = 'block';
+        document.getElementById('nav-' + p).classList.add('active');
+    }
+
+
+    function swapDash(type) {
+        const dash = document.getElementById('mainDash');
+        const cards = { month: document.getElementById('card-month'), day: document.getElementById('card-day'), year: document.getElementById('card-year') };
+        Object.values(cards).forEach(c => c.classList.remove('active'));
+        dash.innerHTML = "";
+        if (type === 'month') dash.append(cards.day, cards.month, cards.year);
+        else if (type === 'day') dash.append(cards.month, cards.day, cards.year);
+        else if (type === 'year') dash.append(cards.month, cards.year, cards.day);
+        cards[type].classList.add('active');
+    }
+
+
+    function doCalc() {
+        let mQ = 0, mM = 0, fQ = 0, fM = 0;
+        document.querySelectorAll('.m-item').forEach(r => {
+            let q = (parseInt(r.querySelector('.p-in').value)||0)*40 + (parseInt(r.querySelector('.s-in').value)||0);
+            let t = q * r.dataset.rate; r.querySelector('.res').innerText = t.toLocaleString(); mQ += q; mM += t;
+        });
+        document.querySelectorAll('.f-item').forEach(r => {
+            let q = (parseInt(r.querySelector('.p-in').value)||0)*40 + (parseInt(r.querySelector('.s-in').value)||0);
+            let t = q * r.dataset.rate; r.querySelector('.res').innerText = t.toLocaleString(); fQ += q; fM += t;
+        });
+        document.getElementById('mQty').innerText = mQ.toLocaleString();
+        document.getElementById('mMoney').innerText = mM.toLocaleString();
+        document.getElementById('fQty').innerText = fQ.toLocaleString();
+        document.getElementById('fMoney').innerText = fM.toLocaleString();
+    }
+
+
+    function updateLive() {
+        let type = document.getElementById('type').value, buyer = document.getElementById('buyer').value;
+        let pQty = parseInt(document.getElementById('pQty').value) || 0, sQty = parseInt(document.getElementById('sQty').value) || 0;
+        let q = (type === "เพน") ? (pQty * 50) + sQty : pQty + sQty;
+        let p = (type === "ศัลยกรรม") ? 500000 : (buyer === "ประชาชน" ? 1400 : 1000);
+        document.getElementById('liveTotal').innerText = (p * q).toLocaleString();
+    }
+
+
+    function saveData() {
+        let seller = document.getElementById('sellerSelect').value;
+        if(!seller) return;
+        let pQty = parseInt(document.getElementById('pQty').value)||0, sQty = parseInt(document.getElementById('sQty').value)||0;
+        let type = document.getElementById('type').value, q = (type === "เพน") ? (pQty * 50) + sQty : pQty + sQty;
+        if(q <= 0) return;
+        sales.push({ id: Date.now(), date: document.getElementById('recordDate').value, type, seller, buyer: document.getElementById('buyer').value, qty: q, total: parseInt(document.getElementById('liveTotal').innerText.replace(/,/g,'')) });
+        localStorage.setItem("clinic_data_2026", JSON.stringify(sales));
+        document.getElementById('pQty').value = ""; document.getElementById('sQty').value = ""; document.getElementById('liveTotal').innerText = "0";
+        renderTotal(); renderHistory();
+    }
+
+
+    function renderTotal() {
+        const date = document.getElementById('dashDate').value;
+        let dSum = 0, mSum = 0, ySum = 0, drs = {};
+        sales.forEach(s => {
+            if(s.date === date) { dSum += s.total; drs[s.seller] = (drs[s.seller]||0) + s.total; }
+            if(s.date.startsWith(date.slice(0,7))) mSum += s.total;
+            if(s.date.startsWith(date.slice(0,4))) ySum += s.total;
+        });
+        document.getElementById('val-day').innerText = dSum.toLocaleString();
+        document.getElementById('val-month').innerText = mSum.toLocaleString();
+        document.getElementById('val-year').innerText = ySum.toLocaleString();
+        let h = "";
+        for(let n in drs) h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`;
+        document.getElementById('sellerGrid').innerHTML = h || "<center>ไม่มีข้อมูล</center>";
+    }
+
+
+    function renderHistory() {
+        const date = document.getElementById('histDate').value;
+        let h = "", count = 1;
+        sales.forEach((s) => {
+            if(s.date === date) {
+                h += `<tr><td>${count++}</td><td style="color:var(--primary);">${s.type}</td><td>${s.buyer}</td><td>${s.qty.toLocaleString()}</td><td style="color:var(--primary); font-size:22px;">${s.total.toLocaleString()}</td><td> ${s.seller}</td><td><button class="btn-del" onclick="delById(${s.id})">ลบ</button></td></tr>`;
+            }
+        });
+        document.getElementById('histBody').innerHTML = h || "<tr><td colspan='7' style='padding:50px; color:#999;'>ไม่มีข้อมูล</td></tr>";
+    }
+
+
+    function delById(id) {
+        sales = sales.filter(s => s.id !== id);
+        localStorage.setItem("clinic_data_2026", JSON.stringify(sales));
+        renderTotal(); renderHistory();
+    }
+</script>
+</body>
+</html>
+
