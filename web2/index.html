@@ -296,15 +296,15 @@ function renderTotal() {
 }
 
 // เพิ่มฟังก์ชันนี้ไว้ท้ายสุดของ <script>
-function clearAllData() {
-    if(confirm("คุณต้องการลบข้อมูลทั้งหมดที่เคยบันทึกไว้ใช่หรือไม่?")) {
-        localStorage.removeItem("clinic_data_2026");
-        sales = [];
-        renderTotal();
-       renderHistory();
-        alert("ลบข้อมูลเรียบร้อยแล้วครับ");
-    }
-}
+//   function clearAllData() {
+ //      if(confirm("คุณต้องการลบข้อมูลทั้งหมดที่เคยบันทึกไว้ใช่หรือไม่?")) {
+ //       localStorage.removeItem("clinic_data_2026");
+ //          sales = [];
+  //         renderTotal();
+   //       renderHistory();
+   //        alert("ลบข้อมูลเรียบร้อยแล้วครับ");
+  //     }
+//   }
 
     function renderHistory() {
         const date = document.getElementById('histDate').value;
