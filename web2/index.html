@@ -103,9 +103,7 @@
                 <option value="BADPORYOUNG [BAD]">BADPORYOUNG [BAD]</option>
                 <option value="Iconic [CON]">Iconic [CON]</option>
                 <option value="IDontgiveafuq [IDGF]">IDontgiveafuq [IDGF]</option>
-                <option value="JUST DO IT NO FAIR (JDIF)">JUST DO IT NO FAIR (JDIF)</option>
                 <option value="Dubaiboy [DBB]">Dubaiboy [DBB]</option>
-                <option value="Facelift [FL]">Facelift [FL]</option>
                 <option value="Dek Hud Doen (DHD)">Dek Hud Doen (DHD)</option>
                 <option value="LUCIASTYLE [LCS]">LUCIASTYLE [LCS]</option>
                 <option value="LAST NIGHT (LN)">LAST NIGHT (LN)</option>
@@ -271,22 +269,42 @@
     }
 
 
-    function renderTotal() {
-        const date = document.getElementById('dashDate').value;
-        let dSum = 0, mSum = 0, ySum = 0, drs = {};
-        sales.forEach(s => {
-            if(s.date === date) { dSum += s.total; drs[s.seller] = (drs[s.seller]||0) + s.total; }
-            if(s.date.startsWith(date.slice(0,7))) mSum += s.total;
-            if(s.date.startsWith(date.slice(0,4))) ySum += s.total;
-        });
-        document.getElementById('val-day').innerText = dSum.toLocaleString();
-        document.getElementById('val-month').innerText = mSum.toLocaleString();
-        document.getElementById('val-year').innerText = ySum.toLocaleString();
-        let h = "";
-        for(let n in drs) h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`;
-        document.getElementById('sellerGrid').innerHTML = h || "<center>ไม่มีข้อมูล</center>";
-    }
+ // ค้นหาฟังก์ชัน renderTotal ในโค้ดของคุณ (ประมาณบรรทัดที่ 185) 
+// แล้วก๊อปปี้ส่วนนี้ไปวางทับ หรือเพิ่มปุ่มด้านล่างนี้ลงไปครับ
 
+function renderTotal() {
+    const date = document.getElementById('dashDate').value;
+    let dSum = 0, mSum = 0, ySum = 0, drs = {};
+    
+    sales.forEach(s => {
+        if(s.date === date) { dSum += s.total; drs[s.seller] = (drs[s.seller]||0) + s.total; }
+        if(s.date.startsWith(date.slice(0,7))) mSum += s.total;
+        if(s.date.startsWith(date.slice(0,4))) ySum += s.total;
+    });
+
+    document.getElementById('val-day').innerText = dSum.toLocaleString();
+    document.getElementById('val-month').innerText = mSum.toLocaleString();
+    document.getElementById('val-year').innerText = ySum.toLocaleString();
+    
+    let h = "";
+    for(let n in drs) h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`;
+    
+    // เพิ่มปุ่มล้างข้อมูลไว้ด้านล่างสุดของ Grid
+    h += `<br><button onclick="clearAllData()" style="width:100%; padding:10px; border:1px solid #ffb3c1; background:none; color:#ffb3c1; border-radius:15px; cursor:pointer; font-family:'Kanit'; font-weight:bold;">ล้างข้อมูลทั้งหมดในเครื่อง</button>`;
+    
+    document.getElementById('sellerGrid').innerHTML = h || "<center>ไม่มีข้อมูล</center>";
+}
+
+// เพิ่มฟังก์ชันนี้ไว้ท้ายสุดของ <script>
+function clearAllData() {
+    if(confirm("คุณต้องการลบข้อมูลทั้งหมดที่เคยบันทึกไว้ใช่หรือไม่?")) {
+        localStorage.removeItem("clinic_data_2026");
+        sales = [];
+        renderTotal();
+       renderHistory();
+        alert("ลบข้อมูลเรียบร้อยแล้วครับ");
+    }
+}
 
     function renderHistory() {
         const date = document.getElementById('histDate').value;
