@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
-   :root { --primary: #ff85a2; --secondary: #4a90e2; }
+    :root { --primary: #ff85a2; --secondary: #4a90e2; }
     *, *::before, *::after { box-sizing: border-box; }
     body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #a0c7f3 0%, #a0c7f3 100%); background-attachment: fixed; padding: 15px; }
     .container { max-width: 1150px; margin: auto; }
@@ -21,6 +21,7 @@
             transition: all 0.5s ease;
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
 
         .min-card:hover {
@@ -77,26 +78,26 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <a href="web1/index.html" class="min-card p-12 rounded-2xl text-center">
+            <div onclick="enterWeb('web1/index.html')" class="min-card p-12 rounded-2xl text-center">
                 <div class="text-4xl mb-8 opacity-60">📢</div>
                 <h2 class="text-lg font-normal mb-2 tracking-wide">ประกาศ</h2>
                 <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">ประกาศคูลดาวน์<br>และ บันทึกต่างๆ</p>
                 <span class="min-btn">Explore</span>
-            </a>
+            </div>
 
-            <a href="web2/index.html" class="min-card p-12 rounded-2xl text-center">
+            <div onclick="enterWeb('web2/index.html')" class="min-card p-12 rounded-2xl text-center">
                 <div class="text-4xl mb-8 opacity-60">💰</div>
                 <h2 class="text-lg font-normal mb-2 tracking-wide">รายรับ รพ.</h2>
                 <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายรับ-จ่าย<br>และ รวมยอด</p>
                 <span class="min-btn">Explore</span>
-            </a>
+            </div>
 
-            <a href="web3/index.html" class="min-card p-12 rounded-2xl text-center">
+            <div onclick="enterWeb('web3/index.html')" class="min-card p-12 rounded-2xl text-center">
                 <div class="text-4xl mb-8 opacity-60">☁️</div>
                 <h2 class="text-lg font-normal mb-2 tracking-wide">ทำเนียบหมอ</h2>
                <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายชื่อหมอ<br>และ ข้อมูลเข้า-ออก</p>
                 <span class="min-btn">Explore</span>
-            </a>
+            </div>
 
         </div>
 
