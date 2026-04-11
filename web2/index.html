@@ -32,7 +32,7 @@
 
 
     .u-input { width: 100%; height: 55px; font-size: 20px; font-weight: 900; border: 2px solid #eee; border-radius: 15px; text-align: center; margin-bottom: 12px; outline: none; font-family: 'Kanit'; background-color: white; color: #444; }
-   
+    
     /* ปรับแต่ง input date ให้เป็นสีชมพูตามต้องการ */
     input[type="date"].pink-date {
         color: var(--primary);
@@ -45,10 +45,10 @@
     .bold-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .bold-table th { color: #333; font-size: 18px; font-weight: 900; padding: 15px 5px; border-bottom: 3px solid #ddd; background: #f9f9f9; text-align: center; vertical-align: middle; }
     .bold-table td { padding: 15px 5px; border-bottom: 1px solid #eee; text-align: center; font-weight: 900; font-size: 19px; color: #222; word-wrap: break-word; vertical-align: middle; }
-   
+    
     .calc-in { width: 90%; height: 48px; font-size: 22px; font-weight: 900; border: 2.5px solid var(--primary); border-radius: 12px; text-align: center; background: #f0f4ff; outline: none; font-family: 'Kanit'; }
     .res { color: var(--primary) !important; font-size: 22px !important; font-weight: 900 !important; }
-   
+    
     .mini-summary { background: #fff5f7; padding: 20px; border-radius: 0 0 35px 35px; margin: 0 -25px -25px -25px; border-top: 3px dashed var(--primary); }
     .sum-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .sum-label { font-size: 22px; font-weight: 900; color: #222; }
@@ -105,7 +105,7 @@
                 <option value="IDontgiveafuq [IDGF]">IDontgiveafuq [IDGF]</option>
                 <option value="Dubaiboy [DBB]">JUST DO IT NO FAIR (JDIF)</option>
                 <option value="Dubaiboy [DBB]">Dubaiboy [DBB]</option>
-                 <option value="Dubaiboy [DBB]">Facelift [FL]</option>
+                <option value="Dubaiboy [DBB]">Facelift [FL]</option>
                 <option value="Dek Hud Doen (DHD)">Dek Hud Doen (DHD)</option>
                 <option value="LUCIASTYLE [LCS]">LUCIASTYLE [LCS]</option>
                 <option value="LAST NIGHT (LN)">LAST NIGHT (LN)</option>
@@ -199,28 +199,47 @@
 </div>
 
 
-<script>
-    let sales = JSON.parse(localStorage.getItem("clinic_data_2026")) || [];
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDErmAM7dA7NJ19jPLGgqKEqLpFW2qwdN0",
+      authDomain: "emss-ebb6e.firebaseapp.com",
+      projectId: "emss-ebb6e",
+      databaseURL: "https://emss-ebb6e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      appId: "1:154198162358:web:f16c1ffd840ceaa8845f17"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const salesRef = ref(db, 'sales_data');
+
+    let sales = [];
+
+    onValue(salesRef, (snapshot) => {
+        const data = snapshot.val();
+        sales = data ? Object.entries(data).map(([key, val]) => ({...val, firebaseKey: key})) : [];
+        renderTotal(); renderHistory();
+    });
+
     window.onload = () => { syncDate(new Date().toLocaleDateString('sv-SE')); showPage('home'); };
 
-
-    function syncDate(val) {
+    window.syncDate = function(val) {
         document.getElementById('recordDate').value = val;
         document.getElementById('dashDate').value = val;
         document.getElementById('histDate').value = val;
         renderTotal(); renderHistory();
     }
 
-
-    function showPage(p) {
+    window.showPage = function(p) {
         document.querySelectorAll('.page').forEach(x => x.style.display = 'none');
         document.querySelectorAll('.nav-menu button').forEach(b => b.classList.remove('active'));
         document.getElementById(p).style.display = 'block';
         document.getElementById('nav-' + p).classList.add('active');
     }
 
-
-    function swapDash(type) {
+    window.swapDash = function(type) {
         const dash = document.getElementById('mainDash');
         const cards = { month: document.getElementById('card-month'), day: document.getElementById('card-day'), year: document.getElementById('card-year') };
         Object.values(cards).forEach(c => c.classList.remove('active'));
@@ -231,8 +250,7 @@
         cards[type].classList.add('active');
     }
 
-
-    function doCalc() {
+    window.doCalc = function() {
         let mQ = 0, mM = 0, fQ = 0, fM = 0;
         document.querySelectorAll('.m-item').forEach(r => {
             let q = (parseInt(r.querySelector('.p-in').value)||0)*40 + (parseInt(r.querySelector('.s-in').value)||0);
@@ -248,8 +266,7 @@
         document.getElementById('fMoney').innerText = fM.toLocaleString();
     }
 
-
-    function updateLive() {
+    window.updateLive = function() {
         let type = document.getElementById('type').value, buyer = document.getElementById('buyer').value;
         let pQty = parseInt(document.getElementById('pQty').value) || 0, sQty = parseInt(document.getElementById('sQty').value) || 0;
         let q = (type === "เพน") ? (pQty * 50) + sQty : pQty + sQty;
@@ -257,75 +274,60 @@
         document.getElementById('liveTotal').innerText = (p * q).toLocaleString();
     }
 
-
-    function saveData() {
+    window.saveData = function() {
         let seller = document.getElementById('sellerSelect').value;
         if(!seller) return;
         let pQty = parseInt(document.getElementById('pQty').value)||0, sQty = parseInt(document.getElementById('sQty').value)||0;
         let type = document.getElementById('type').value, q = (type === "เพน") ? (pQty * 50) + sQty : pQty + sQty;
         if(q <= 0) return;
-        sales.push({ id: Date.now(), date: document.getElementById('recordDate').value, type, seller, buyer: document.getElementById('buyer').value, qty: q, total: parseInt(document.getElementById('liveTotal').innerText.replace(/,/g,'')) });
-        localStorage.setItem("clinic_data_2026", JSON.stringify(sales));
+
+        const newData = {
+            id: Date.now(),
+            date: document.getElementById('recordDate').value,
+            type: type,
+            seller: seller,
+            buyer: document.getElementById('buyer').value,
+            qty: q,
+            total: parseInt(document.getElementById('liveTotal').innerText.replace(/,/g,''))
+        };
+
+        push(salesRef, newData);
         document.getElementById('pQty').value = ""; document.getElementById('sQty').value = ""; document.getElementById('liveTotal').innerText = "0";
-        renderTotal(); renderHistory();
     }
 
+    window.renderTotal = function() {
+        const date = document.getElementById('dashDate').value;
+        let dSum = 0, mSum = 0, ySum = 0, drs = {};
+        
+        sales.forEach(s => {
+            if(s.date === date) { dSum += s.total; drs[s.seller] = (drs[s.seller]||0) + s.total; }
+            if(s.date.startsWith(date.slice(0,7))) mSum += s.total;
+            if(s.date.startsWith(date.slice(0,4))) ySum += s.total;
+        });
 
- // ค้นหาฟังก์ชัน renderTotal ในโค้ดของคุณ (ประมาณบรรทัดที่ 185) 
-// แล้วก๊อปปี้ส่วนนี้ไปวางทับ หรือเพิ่มปุ่มด้านล่างนี้ลงไปครับ
+        document.getElementById('val-day').innerText = dSum.toLocaleString();
+        document.getElementById('val-month').innerText = mSum.toLocaleString();
+        document.getElementById('val-year').innerText = ySum.toLocaleString();
+        
+        let h = "";
+        for(let n in drs) h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`;
+        document.getElementById('sellerGrid').innerHTML = h || "<center>ไม่มีข้อมูล</center>";
+    }
 
-function renderTotal() {
-    const date = document.getElementById('dashDate').value;
-    let dSum = 0, mSum = 0, ySum = 0, drs = {};
-    
-    sales.forEach(s => {
-        if(s.date === date) { dSum += s.total; drs[s.seller] = (drs[s.seller]||0) + s.total; }
-        if(s.date.startsWith(date.slice(0,7))) mSum += s.total;
-        if(s.date.startsWith(date.slice(0,4))) ySum += s.total;
-    });
-
-    document.getElementById('val-day').innerText = dSum.toLocaleString();
-    document.getElementById('val-month').innerText = mSum.toLocaleString();
-    document.getElementById('val-year').innerText = ySum.toLocaleString();
-    
-    let h = "";
-    for(let n in drs) h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`;
-    
-    // เพิ่มปุ่มล้างข้อมูลไว้ด้านล่างสุดของ Grid
-    h += `<br><button onclick="clearAllData()" style="width:100%; padding:10px; border:1px solid #ffb3c1; background:none; color:#ffb3c1; border-radius:15px; cursor:pointer; font-family:'Kanit'; font-weight:bold;">ล้างข้อมูลทั้งหมดในเครื่อง</button>`;
-    
-    document.getElementById('sellerGrid').innerHTML = h || "<center>ไม่มีข้อมูล</center>";
-}
-
-// เพิ่มฟังก์ชันนี้ไว้ท้ายสุดของ <script>
-//   function clearAllData() {
- //      if(confirm("คุณต้องการลบข้อมูลทั้งหมดที่เคยบันทึกไว้ใช่หรือไม่?")) {
- //       localStorage.removeItem("clinic_data_2026");
- //          sales = [];
-  //         renderTotal();
-   //       renderHistory();
-   //        alert("ลบข้อมูลเรียบร้อยแล้วครับ");
-  //     }
-//   }
-
-    function renderHistory() {
+    window.renderHistory = function() {
         const date = document.getElementById('histDate').value;
         let h = "", count = 1;
-        sales.forEach((s) => {
-            if(s.date === date) {
-                h += `<tr><td>${count++}</td><td style="color:var(--primary);">${s.type}</td><td>${s.buyer}</td><td>${s.qty.toLocaleString()}</td><td style="color:var(--primary); font-size:22px;">${s.total.toLocaleString()}</td><td> ${s.seller}</td><td><button class="btn-del" onclick="delById(${s.id})">ลบ</button></td></tr>`;
-            }
+        sales.filter(s => s.date === date).forEach((s) => {
+            h += `<tr><td>${count++}</td><td style="color:var(--primary);">${s.type}</td><td>${s.buyer}</td><td>${s.qty.toLocaleString()}</td><td style="color:var(--primary); font-size:22px;">${s.total.toLocaleString()}</td><td> ${s.seller}</td><td><button class="btn-del" onclick="delById('${s.firebaseKey}')">ลบ</button></td></tr>`;
         });
         document.getElementById('histBody').innerHTML = h || "<tr><td colspan='7' style='padding:50px; color:#999;'>ไม่มีข้อมูล</td></tr>";
     }
 
-
-    function delById(id) {
-        sales = sales.filter(s => s.id !== id);
-        localStorage.setItem("clinic_data_2026", JSON.stringify(sales));
-        renderTotal(); renderHistory();
+    window.delById = function(key) {
+        if(confirm("คุณต้องการลบรายการนี้ใช่หรือไม่?")) {
+            remove(ref(db, `sales_data/${key}`));
+        }
     }
 </script>
 </body>
 </html>
-
