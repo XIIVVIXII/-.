@@ -101,6 +101,7 @@ button.copy{
     font-family: 'Kanit', sans-serif;
     font-size: 14px;
     line-height: 1.5;
+    position: relative;
 }
 
 .ruleItem{
@@ -110,6 +111,64 @@ button.copy{
     padding: 5px;
     border-bottom: 1px dashed #ffd0df;
 }
+
+/* ปรับปรุงหน้าบันทึกประกาศ */
+.history-item {
+    background: #fff;
+    border: 1px solid #ffd0df;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 15px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(255, 133, 162, 0.1);
+}
+
+.history-time {
+    color: #ff6f9c;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.history-text {
+    color: #444;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    padding-right: 40px;
+}
+
+.delete-log-btn {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    background: #ffe5ed;
+    color: #ff4d4d;
+    border: 1px solid #ffccd5;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.delete-log-btn:hover {
+    background: #ff4d4d;
+    color: white;
+}
+
+/* สไตล์เพิ่มเติมสำหรับหน้าจัดการ */
+.manage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+.delete-btn { background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 2px 8px; }
+
+/* สีพิเศษสำหรับหัวข้อกฎ */
+.text-danger { color: #ff0000 !important; font-weight: bold; }
+.text-normal { color: #333; }
+optgroup { font-weight: bold; color: #ff6f9c; background: #fff0f5; }
 
 </style>
 </head>
@@ -132,26 +191,7 @@ button.copy{
 
 <label>เลือกแก๊ง</label>
 <select id="gang">
-<option>21ˢᵗ [21ˢᵗ]</option>
-<option>28GEN [28]</option>
-<option>1995 [IX95]</option>
-<option>As Soon As Possible[A$AP]</option>
-<option>ATLAS [A]</option>
-<option>BADPORYOUNG [BAD]</option>
-<option>Dek Hud Doen (DHD)</option>
-<option>Dubaiboy [DBB]</option>
-<option>Facelift [FL]</option>
-<option>Iconic [CON]</option>
-<option>IDontgiveafuq [IDGF]</option>
-<option>JUST DO IT NO FAIR (JDIF)</option>
-<option>LAST NIGHT (LN)</option>
-<option>LUCIASTYLE [LCS]</option>
-<option>Nompong [NP]</option>
-<option>R RAI KON (RRK)</option>
-<option>Shelikenisaileow [SHE]</option>
-<option>VARENTHAS [VRT]</option>
-<option>Yaoguai [YG]</option>
-</select>
+    </select>
 
 <label>เตือนครั้งที่</label>
 <select id="warnLevel">
@@ -161,58 +201,8 @@ button.copy{
 
 <label>เลือกข้อกฎ</label>
 <select id="ruleSelect">
-<option value="">-- กฏพี้นฐานโรงพยาบาล --</option>
-<option value="10|100000|สวมใส่หน้ากากหรือสิ่งปกปิดใบหน้าในเขตพื้นที่โรงพยาบาล">ข้อ 10 สวมใส่หน้ากากหรือสิ่งปกปิดใบหน้าในเขตพื้นที่โรงพยาบาล (100,000)</option>
-<option value="11|1000000|ใช้ความรุนแรง ทำร้ายร่างกาย แสดงกิริยาท่าทางที่ไม่เหมาะสมกับบุคลากรในหน่วยงาน หมอ ทั้งหมดที่อยู่ในเครื่องแบบ">ข้อที่ 11 ใช้ความรุนแรง ทำร้ายร่างกาย แสดงกิริยาท่าทางที่ไม่เหมาะสมกับบุคลากรในหน่วยงาน หมอ ทั้งหมดที่อยู่ในเครื่องแบบ (1,000,000)</option>
-<option value="11|1000000|ใช้คำพูดดูหมิ่น เหยียดหยาม เสียดสี จิกกัด ข่มขู่ ก่อกวน แสดงกิริยาท่าทางที่ไม่เหมาะสมกับบุคลากรในหน่วยงาน หมอ ทั้งหมดที่อยู่ในเครื่องแบบ">ข้อที่ 11 ใช้คำพูดดูหมิ่น เหยียดหยาม เสียดสี จิกกัด ข่มขู่ ก่อกวน แสดงกิริยาท่าทางที่ไม่เหมาะสมกับบุคลากรในหน่วยงาน หมอ ทั้งหมดที่อยู่ในเครื่องแบบ (1,000,000)</option>
-<option value="11|1000000|ทำร้ายร่างกายหมอบาดเจ็บ">ข้อที่ 11 ทำร้ายร่างกายหมอบาดเจ็บ (1,000,000)</option>
-<option value="11|3000000|ทำร้ายหมอจนสลบ">ข้อที่ 11 ทำร้ายร่างกายหมอสลบ (3,000,000)</option>
-<option value="12|1000000|แอบอ้างเป็นหน่วยงาน หมอ">ข้อที่ 12 แอบอ้างเป็นหน่วยงาน หมอ (1,000,000)</option>
-<option value="12|1000000|ใส่ชุดหน่วยงานหมอ[ไม่ได้เป็นหน่วยงานหมอ]">ข้อที่ 12 ใส่ชุดหน่วยงานหมอ[ไม่ได้เป็นหน่วยงานหมอ] (1,000,000)</option>
-<option value="">-- กฎ BLACKLIST --</option>
-<option value="1|500000|ไม่เก็บรถก่อนเข้าพื้นที่โรงพยาบาล">ข้อที่ 1 ไม่เก็บรถก่อนเข้าพื้นที่โรงพยาบาล (500,000)</option>
-<option value="2|100000|กดเรียกเคสจากในวอโซน">ข้อที่ 2 กดเรียกเคสจากในวอโซน (100,000)</option>
-<option value="2|100000|กดเรียกเคสจากในแอร์ดรอป">ข้อที่ 2 กดเรียกเคสจากในแอร์ดรอป (100,000)</option>
-<option value="3|100000|ไม่สวมหน้ากากในพื้นที่โรงพยาบาล">ข้อที่ 3 ไม่สวมหน้ากากในพื้นที่โรงพยาบาล (100,000)</option>
-<option value="4|100000|ควักอาวุธทุกชนิดในเขตพื้นที่โรงพยาบาล">ข้อที่ 4 ควักอาวุธในเขตพื้นที่โรงพยาบาล (100,000)</option>
-<option value="5|1000000|พูดหรือทำพฤติกรรมที่เป็นการข่มขู่แพทย์">ข้อที่ 5 พูดหรือทำพฤติกรรมที่เป็นการข่มขู่แพทย์ (1,000,000)</option>
-<option value="6|1000000|ทำร้ายร่างกายหน่วยงานแพทย์บาดเจ็บในเขตพื้นที่โรงพยาบาล">ข้อที่ 6 ทำร้ายร่างกายหน่วยงานแพทย์บาดเจ็บในเขตพื้นที่โรงพยาบาล (1,000,000)</option>
-<option value="6|3000000|ทำร้ายร่างกายหน่วยงานแพทย์สลบในเขตพื้นที่โรงพยาบาล">ข้อที่ 6 ทำร้ายร่างกายหน่วยงานแพทย์สลบในเขตพื้นที่โรงพยาบาล (3,000,000)</option>
-<option value="6|1000000|ทำร้ายร่างกายหน่วยงานแพทย์บาดเจ็บในพื้นที่อื่น ๆ">ข้อที่ 6 ทำร้ายร่างกายหน่วยงานแพทย์บาดเจ็บในพื้นที่อื่น ๆ (1,000,000)</option>
-<option value="6|3000000|ทำร้ายร่างกายหน่วยงานแพทย์สลบในพื้นที่อื่น ๆ">ข้อที่ 6 ทำร้ายร่างกายหน่วยงานแพทย์สลบในพื้นที่อื่น ๆ (3,000,000)</option>
-<option value="7|500000|ทะเลาะวิวาทในเขตพื้นที่โรงพยาบาล">ข้อที่ 7 ทะเลาะวิวาทในเขตพื้นที่โรงพยาบาล (500,000)</option>
-<option value="7|500000|ทำร้ายร่างกายในเขตพื้นที่โรงพยาบาล">ข้อที่ 7 ทำร้ายร่างกายในเขตพื้นที่โรงพยาบาล (500,000)</option>
-<option value="7|500000|ทำร้ายร่างกายในระยะสายตาของแพทย์">ข้อที่ 7 ทำร้ายร่างกายในระยะสายตาของแพทย์ (500,000)</option>
-<option value="8|500000|บลัฟกันต่อหน้าหมอ">ข้อที่ 8 บลัฟกันต่อหน้าหมอ (500,000)</option>
-<option value="8|500000|ล้อหลอก บลัฟ แซะ ด่า หรือหยาบคายต่อหน้าหมอ">ข้อที่ 8 ล้อหลอก บลัฟ แซะ ด่า หรือหยาบคายต่อหน้าหมอ (500,000)</option>
-<option value="9|300000|ถ่ายรูปติดหน่วยงานแพทย์ หรือยานพาหนะของหน่วยงานแพทย์ลงทวิตเตอร์">ข้อที่ 9 ถ่ายรูปติดหน่วยงานแพทย์ หรือยานพาหนะของหน่วยงานแพทย์ลงทวิตเตอร์ (300,000)</option>
-<option value="10|300000|ก่อกวนในเขตพื้นที่โรงพยาบาล">ข้อที่ 10 ก่อกวนในเขตพื้นที่โรงพยาบาล (300,000)</option>
-<option value="10|300000|ส่งเสียงดังรบกวนคนอื่นในเขตพื้นที่โรงพยาบาล">ข้อที่ 10 ส่งเสียงดังรบกวนคนอื่นในเขตพื้นที่โรงพยาบาล (300,000)</option>
-<option value="11|1000000|ทำอนาจารในเขตพื้นที่โรงพยาบาล">ข้อที่ 11 ทำอนาจารในเขตพื้นที่โรงพยาบาล (1,000,000)</option>
-<option value="12|4000000|ขโมยยานพาหนะ หรือขับยานพาหนะของแพทย์ทุกชนิด">ข้อที่ 12 ขโมยยานพาหนะ หรือขับยานพาหนะของแพทย์ทุกชนิด (4,000,000)</option>
-<option value="12|4000000|จงใจทำลาย หรือทำให้เกิดความเสียหาย ทั้งรถ หรือเฮลิคอปเตอร์ของแพทย์">ข้อที่ 12 จงใจทำลาย หรือทำให้เกิดความเสียหาย ทั้งรถ หรือเฮลิคอปเตอร์ของแพทย์ (4,000,000)</option>
-<option value="13|500000|บั๊มรถในเขตพื้นที่โรงพยาบาลทุกกรณี">ข้อที่ 13 บั๊มรถในเขตพื้นที่โรงพยาบาลทุกกรณี (500,000)</option>
-<option value="15|500000|ประชาชนที่มีสตอรี่หลบเข้าพื้นที่โรงพยาบาล">ข้อที่ 15 ประชาชนที่มีสตอรี่หลบเข้าพื้นที่โรงพยาบาล (500,000)</option>
-<option value="15|500000|แก๊งที่มีสตอรี่หลบเข้าพื้นที่โรงพยาบาล">ข้อที่ 15 แก๊งที่มีสตอรี่หลบเข้าพื้นที่โรงพยาบาล (500,000)</option>
-<option value="16|500000|รักษาเสร็จแล้วไม่ออกจากพื้นที่เขตโรงพยาบาล">ข้อที่ 16 รักษาเสร็จแล้วไม่ออกจากพื้นที่เขตโรงพยาบาล (500,000)</option>
-<option value="17|500000|กักศพไกลเกิน">ข้อที่ 17 กักศพไกลเกิน (500,000)</option>
-<option value="18|1000000|เคลื่อนย้ายศพ">ข้อที่ 18 เคลื่อนย้ายศพ (1,000,000)</option>
-<option value="19|2000000|ประกาศเรียกคืนศพหน่วยงานแล้วมีการฝ่าฝืน">ข้อที่ 19 ประกาศเรียกคืนศพหน่วยงานแล้วมีการฝ่าฝืน (2,000,000)</option>
-<option value="20|1000000|ประกาศเรียกคืนศพคาเท้าแล้วมีการฝ่าฝืน">ข้อที่ 20 ประกาศเรียกคืนศพคาเท้าแล้วมีการฝ่าฝืน (1,000,000)</option>
-<option value="21|3000000|อุ้มคาเท้า ในกรณีหน่วยงานไม่ครบ (หมอ7 ตำรวจ7)">ข้อที่ 21 อุ้มคาเท้า ในกรณีหน่วยงานไม่ครบ (หมอ7 ตำรวจ7) (3,000,000)</option>
-<option value="22|4000000|ห่อศพ ในกรณีหน่วยงานไม่ครบ (หมอ9 ตำรวจ12)">ข้อที่ 22 ห่อศพ ในกรณีหน่วยงานไม่ครบ (หมอ9 ตำรวจ12) (4,000,000)</option>
-<option value="">-- ทำผิดกฏBlacklist กรณีสตอรี่ --</option>
-<option value="14|500000|ชุบต่อหน้าแพทย์">ข้อที่ 14 ชุบต่อหน้าแพทย์ (500,000)</option>
-<option value="14|500000|ควักอาวุธในพื้นที่โรงพยาบาล">ข้อที่ 14 ควักอาวุธในพื้นที่โรงพยาบาล (500,000)</option>
-<option value="14|500000|พูดจาข่มขู่">ข้อที่ 14 พูดจาข่มขู่ (500,000)</option>
-<option value="14|500000|ขับรถเข้ามาในพื้นที่โรงพยาบาล">ข้อที่ 14 ขับรถเข้ามาในพื้นที่โรงพยาบาล (500,000)</option>
-<option value="14|500000|หลบอยู่ในพื้นที่โรงพยาบาล">ข้อที่ 14 หลบอยู่ในพื้นที่โรงพยาบาล (500,000)</option>
-<option value="14|500000|เดินเข้าเดินออกเขตพื้นที่โรงพยาบาล">ข้อที่ 14 เดินเข้าเดินออกเขตพื้นที่โรงพยาบาล (500,000)</option>
-<option value="14|500000|ดึงศพออกจากมือหมอ">ข้อที่ 14 ดึงศพออกจากมือหมอ (500,000)</option>
-<option value="14|500000|บัพต่อหน้าหมอ">ข้อที่ 14 บัพต่อหน้าหมอ (500,000)</option>
-<option value="14|500000|ฝ่าฝืนคำตักเตือนของแพทย์">ข้อที่ 14 ฝ่าฝืนคำตักเตือนของแพทย์ (500,000)</option>
-<option value="14|500000|ล้อหลอก บลัฟ แซะ ด่า หรือหยาบคายต่อหน้าหมอ">ข้อที่ 14 ล้อหลอก บลัฟ แซะ ด่า หรือหยาบคายต่อหน้าหมอ (500,000)</option>
-</select>
+    <option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>
+    </select>
 
 <button class="action" onclick="addRule()">เพิ่มข้อ</button>
 <div id="ruleList" class="log"></div>
@@ -249,26 +239,7 @@ button.copy{
 
 <label>เลือกแก๊ง</label>
 <select id="coolGang">
-<option>21ˢᵗ [21ˢᵗ]</option>
-<option>28GEN [28]</option>
-<option>1995 [IX95]</option>
-<option>As Soon As Possible[A$AP]</option>
-<option>ATLAS [A]</option>
-<option>BADPORYOUNG [BAD]</option>
-<option>Dek Hud Doen (DHD)</option>
-<option>Dubaiboy [DBB]</option>
-<option>Facelift [FL]</option>
-<option>Iconic [CON]</option>
-<option>IDontgiveafuq [IDGF]</option>
-<option>JUST DO IT NO FAIR (JDIF)</option>
-<option>LAST NIGHT (LN)</option>
-<option>LUCIASTYLE [LCS]</option>
-<option>Nompong [NP]</option>
-<option>R RAI KON (RRK)</option>
-<option>Shelikenisaileow [SHE]</option>
-<option>VARENTHAS [VRT]</option>
-<option>Yaoguai [YG]</option>
-</select>
+    </select>
 
 <button class="action" onclick="cooldown()">สร้างประกาศ</button>
 
@@ -305,7 +276,7 @@ button.copy{
 </div>
 
 <div id="logPage" class="page">
-<div class="box">
+<div class="box" style="max-width: 800px;">
 <h2>📜 บันทึกประกาศ</h2>
 <div id="history"></div>
 </div>
@@ -313,23 +284,110 @@ button.copy{
 
 <script type="module">
 // --- 1. Firebase Setup ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCy0tdPIEwL7zW1ZGx4OQ6GZbPGgyHRDBE",
-    authDomain: "ssme-1f53b.firebaseapp.com",
-    projectId: "ssme-1f53b",
-    databaseURL: "https://ssme-1f53b-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    storageBucket: "ssme-1f53b.firebasestorage.app",
-    messagingSenderId: "186913408309",
-    appId: "1:186913408309:web:ddedab18ca3c8cd1d4387c",
-    measurementId: "G-7ZJJLMG800"
-};
+      apiKey: "AIzaSyDErmAM7dA7NJ19jPLGgqKEqLpFW2qwdN0",
+      authDomain: "emss-ebb6e.firebaseapp.com",
+      projectId: "emss-ebb6e",
+      databaseURL: "https://emss-ebb6e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      appId: "1:154198162358:web:f16c1ffd840ceaa8845f17"
+    };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const logRef = ref(db, 'announcement_logs');
+const gangListRef = ref(db, 'gang_list');
+const ruleListRef = ref(db, 'rule_list');
+
+function customSort(a, b) {
+    return a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' });
+}
+
+// --- Sync Portal Data ---
+function syncPortalData() {
+    onValue(gangListRef, (snapshot) => {
+        const gangs = snapshot.val();
+        const gangSelects = ['gang', 'coolGang'];
+        gangSelects.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = "";
+        });
+
+        if (gangs) {
+            const sortedGangs = Object.keys(gangs).map(key => ({
+                key: key,
+                name: typeof gangs[key] === 'object' ? gangs[key].name : gangs[key],
+                selected: typeof gangs[key] === 'object' ? (gangs[key].selected !== false) : true
+            })).sort((a, b) => customSort(a.name, b.name));
+
+            sortedGangs.forEach(item => {
+                if (item.selected) {
+                    gangSelects.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            const opt = document.createElement('option');
+                            opt.value = item.name;
+                            opt.textContent = item.name;
+                            el.appendChild(opt);
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    onValue(ruleListRef, (snapshot) => {
+        const rulesData = snapshot.val();
+        const select = document.getElementById('ruleSelect');
+        
+        if (select) select.innerHTML = '<option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>';
+
+        if (rulesData) {
+            const sortedRules = Object.keys(rulesData).map(key => ({
+                key: key,
+                ...rulesData[key]
+            })).sort((a, b) => customSort(String(a.no), String(b.no)));
+
+            const groups = {
+                basic: document.createElement('optgroup'),
+                blacklist: document.createElement('optgroup'),
+                story: document.createElement('optgroup')
+            };
+            groups.basic.label = "-- กฎพื้นฐานโรงพยาบาล --";
+            groups.blacklist.label = "-- กฎ BLACKLIST --";
+            groups.story.label = "-- ทำผิดกฎ Blacklist กรณีสตอรี่ --";
+
+            sortedRules.forEach(r => {
+                const isSelected = r.selected !== false;
+                const category = r.category || 'basic'; // รองรับ category 'basic' ตามภาพ Firebase
+                let colorClass = (category === 'blacklist' || category === 'story') ? 'text-danger' : 'text-normal';
+
+                if (isSelected && select) {
+                    const opt = document.createElement('option');
+                    opt.className = colorClass;
+                    opt.value = `${r.no}|${r.fine}|${r.detail}`;
+                    opt.textContent = `ข้อที่ ${r.no} ${r.detail} (${Number(r.fine).toLocaleString()})`;
+                    
+                    // เพิ่มลงกลุ่มที่ถูกต้อง (ถ้า category เป็น basic หรือ normal ให้ลงกลุ่ม basic)
+                    if (category === 'basic' || category === 'normal') {
+                        groups.basic.appendChild(opt);
+                    } else if (groups[category]) {
+                        groups[category].appendChild(opt);
+                    }
+                }
+            });
+            
+            if(select) {
+                if(groups.basic.children.length > 0) select.appendChild(groups.basic);
+                if(groups.blacklist.children.length > 0) select.appendChild(groups.blacklist);
+                if(groups.story.children.length > 0) select.appendChild(groups.story);
+            }
+        }
+    });
+}
+syncPortalData();
 
 // --- 2. Global Variables & UI Functions ---
 let rules=[];
@@ -412,11 +470,11 @@ onValue(logRef, (snapshot) => {
         Object.keys(data).reverse().forEach(key => {
             const item = data[key];
             let div = document.createElement("div");
-            div.className = "log";
+            div.className = "history-item";
             div.innerHTML = `
-                <div style="color:#ff6f9c; font-weight:bold; margin-bottom:5px;">🕒 ${item.time}</div>
-                ${item.text}<br><br>
-                <button onclick="deleteLog('${key}')" style="background:#ffd0df; border:none; border-radius:5px; cursor:pointer;">🗑 ลบ</button>
+                <div class="history-time">🕒 ${item.time}</div>
+                <div class="history-text">${item.text}</div>
+                <button class="delete-log-btn" onclick="deleteLog('${key}')">🗑 ลบ</button>
             `;
             box.appendChild(div);
         });
