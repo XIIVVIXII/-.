@@ -11,36 +11,23 @@
     body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #8bbaf8 0%, #e0c3fc 100%); background-attachment: fixed; padding: 15px; }
     .container { max-width: 1150px; margin: auto; }
 
-
     .main-header { text-align: center; padding: 20px 0; margin-bottom: 10px; }
     .main-header h1 { font-size: 50px; font-weight: 900; color: #fff; text-shadow: 3px 3px 0px var(--primary), 6px 6px 15px rgba(0,0,0,0.2); margin: 0; }
 
-
-    .nav-menu { display: flex; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; z-index: 1000; }
-    .nav-menu button { flex: 1; padding: 15px; border: none; border-radius: 20px; background: #fff; color: var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; font-weight: 900; font-size: 16px; transition: 0.3s; }
+    .nav-menu { display: flex; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; z-index: 1000; overflow-x: auto; padding-bottom: 5px; }
+    .nav-menu button { flex: 1; min-width: 100px; padding: 15px; border: none; border-radius: 20px; background: #fff; color: var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; font-weight: 900; font-size: 16px; transition: 0.3s; white-space: nowrap; }
     .nav-menu button.active { background: var(--primary); color: #fff; }
-
 
     .page { display: none; animation: fadeIn 0.4s ease-out; }
     .box { background: rgba(255,255,255,0.95); padding: 25px; border-radius: 35px; margin-bottom: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
     h3 { color: var(--primary); text-align: center; font-weight: 900; font-size: 28px; margin: 0 0 20px 0; }
 
-
-    /* ส่วนหัวของประวัติที่ปรับปรุงใหม่ */
-    .history-header { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; }
+    .history-header { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
     .history-header h3 { margin: 0; }
-
 
     .u-input { width: 100%; height: 55px; font-size: 20px; font-weight: 900; border: 2px solid #eee; border-radius: 15px; text-align: center; margin-bottom: 12px; outline: none; font-family: 'Kanit'; background-color: white; color: #444; }
     
-    /* ปรับแต่ง input date ให้เป็นสีชมพูตามต้องการ */
-    input[type="date"].pink-date {
-        color: var(--primary);
-        border: 2.5px solid var(--primary);
-        cursor: pointer;
-        padding: 5px 15px;
-    }
-
+    input[type="date"].pink-date { color: var(--primary); border: 2.5px solid var(--primary); cursor: pointer; padding: 5px 15px; }
 
     .bold-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .bold-table th { color: #333; font-size: 18px; font-weight: 900; padding: 15px 5px; border-bottom: 3px solid #ddd; background: #f9f9f9; text-align: center; vertical-align: middle; }
@@ -54,28 +41,30 @@
     .sum-label { font-size: 22px; font-weight: 900; color: #222; }
     .sum-val { font-size: 28px; font-weight: 900; color: var(--primary); }
 
-
     .dashboard { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 20px 0; min-height: 260px; }
     .stat-card { flex: 1; background: #fff; border-radius: 30px; padding: 15px; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; cursor: pointer; }
     .stat-card.active { flex: 1.6; height: 230px; border: 3px solid var(--primary); box-shadow: 0 20px 40px rgba(255,133,162,0.25); transform: scale(1.05); }
     .stat-value { color: #444; font-size: 30px; font-weight: 900; }
     .active .stat-value { color: var(--secondary); font-size: 55px; }
 
-
     .seller-item { display: flex; justify-content: space-between; padding: 18px 25px; background: #fff; border-radius: 20px; margin-bottom: 10px; font-size: 26px; font-weight: 900; }
     .btn-del { color: red; border: 2px solid red; border-radius: 12px; padding: 8px 15px; background: white; font-weight: 900; cursor: pointer; transition: 0.2s; }
     .btn-del:hover { background: red; color: white; }
 
+    .manage-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 12px 20px; border-radius: 15px; margin-bottom: 8px; border: 1px solid #eee; }
+    .manage-name { font-weight: 900; font-size: 20px; color: #444; }
+
+    .search-box { display: flex; gap: 10px; width: 100%; max-width: 800px; margin: 0 auto 20px auto; }
+    .search-input { flex: 2; height: 50px; border-radius: 15px; border: 2px solid var(--primary); padding: 0 20px; font-family: 'Kanit'; font-weight: 600; font-size: 18px; outline: none; }
+    .filter-select { flex: 1; height: 50px; border-radius: 15px; border: 2px solid #ddd; font-family: 'Kanit'; font-weight: 600; text-align: center; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
 </style>
 </head>
 <body>
 
-
 <div class="container">
     <div class="main-header"><h1>รายรับ รพ.</h1></div>
-
 
     <div class="nav-menu">
         <button id="nav-home" onclick="showPage('home')">บันทึก 📝</button>
@@ -83,7 +72,6 @@
         <button id="nav-total" onclick="showPage('total')">รวมยอด 💰</button>
         <button id="nav-history" onclick="showPage('history')">ประวัติ 📜</button>
     </div>
-
 
     <div id="home" class="page">
         <div class="box" style="max-width: 500px; margin: auto;">
@@ -95,33 +83,9 @@
             </select>
             <select id="buyer" class="u-input" onchange="updateLive()">
                 <option value="ประชาชน">ประชาชน</option>
-                <option value="21ˢᵗ [21ˢᵗ]">21ˢᵗ [21ˢᵗ]</option>
-                <option value="28GEN [28]">28GEN [28]</option>
-                <option value="1995 [IX95]">1995 [IX95]</option>
-                <option value="As Soon As Possible [A$AP]">As Soon As Possible [A$AP]</option>
-                <option value="ATLAS [A]">ATLAS [A]</option>
-                <option value="BADPORYOUNG [BAD]">BADPORYOUNG [BAD]</option>
-                <option value="Iconic [CON]">Iconic [CON]</option>
-                <option value="IDontgiveafuq [IDGF]">IDontgiveafuq [IDGF]</option>
-                <option value="Dubaiboy [DBB]">JUST DO IT NO FAIR (JDIF)</option>
-                <option value="Dubaiboy [DBB]">Dubaiboy [DBB]</option>
-                <option value="Dubaiboy [DBB]">Facelift [FL]</option>
-                <option value="Dek Hud Doen (DHD)">Dek Hud Doen (DHD)</option>
-                <option value="LUCIASTYLE [LCS]">LUCIASTYLE [LCS]</option>
-                <option value="LAST NIGHT (LN)">LAST NIGHT (LN)</option>
-                <option value="Nompong [NP]">Nompong [NP]</option>
-                <option value="R RAI KON (RRK)">R RAI KON (RRK)</option>
-                <option value="Shelikenisaileow [SHE]">Shelikenisaileow [SHE]</option>
-                <option value="VARENTHAS [VRT]">VARENTHAS [VRT]</option>
-                <option value="Yaoguai [YG]">Yaoguai [YG]</option>
             </select>
             <select id="sellerSelect" class="u-input">
-                <option value="High">High</option>
-                <option value="Taichi">Taichi</option>
-                <option value="Cookie">Cookie</option>
-                <option value="Jaokha">Jaokha</option>
-                <option value="June">June</option>
-                <option value="SaSha">SaSha</option>
+                <option value="">กำลังโหลดรายชื่อ...</option>
             </select>
             <div style="display:flex; gap:10px;">
                 <input id="pQty" class="u-input" type="number" placeholder="แพ็ค" oninput="updateLive()">
@@ -132,34 +96,31 @@
         </div>
     </div>
 
-
     <div id="calc" class="page">
         <div class="box">
             <h3>🌱 ฟาร์มหายนะ (x40)</h3>
             <table class="bold-table">
                 <thead><tr><th style="width:25%">สินค้า</th><th style="width:15%">เรท</th><th style="width:20%">แพ็ค</th><th style="width:20%">ชิ้น</th><th style="width:20%">เงิน</th></tr></thead>
-                <tr class="f-item" data-rate="450"><td>พริก</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
                 <tr class="f-item" data-rate="450"><td>กะหล่ำ</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
-                <tr class="f-item" data-rate="450"><td>แครอท</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
                 <tr class="f-item" data-rate="450"><td>ข้าว</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
                 <tr class="f-item" data-rate="450"><td>ไข่มุก</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>พริก</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
                 <tr class="f-item" data-rate="450"><td>แป้ง</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="f-item" data-rate="450"><td>แครอท</td><td>450</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
             </table>
             <div class="mini-summary">
                 <div class="sum-line"><span class="sum-label">📦 รวมจำนวน:</span><span class="sum-val" id="fQty">0</span></div>
                 <div class="sum-line"><span class="sum-label">💰 เงินฟาร์มรวม:</span><span class="sum-val" id="fMoney">0</span></div>
             </div>
         </div>
-
-
         <div class="box">
             <h3>⛏️ เหมืองหายนะ (x40)</h3>
             <table class="bold-table">
                 <thead><tr><th style="width:25%">สินค้า</th><th style="width:15%">เรท</th><th style="width:20%">แพ็ค</th><th style="width:20%">ชิ้น</th><th style="width:20%">เงิน</th></tr></thead>
-                <tr class="m-item" data-rate="700"><td>Iron</td><td>700</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
-                <tr class="m-item" data-rate="300"><td>Gold</td><td>300</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
                 <tr class="m-item" data-rate="100"><td>Cop</td><td>100</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
                 <tr class="m-item" data-rate="100"><td>Dim</td><td>100</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="m-item" data-rate="300"><td>Gold</td><td>300</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
+                <tr class="m-item" data-rate="700"><td>Iron</td><td>700</td><td><input class="calc-in p-in" type="number" oninput="doCalc()"></td><td><input class="calc-in s-in" type="number" oninput="doCalc()"></td><td class="res">0</td></tr>
             </table>
             <div class="mini-summary">
                 <div class="sum-line"><span class="sum-label">📦 รวมจำนวน:</span><span class="sum-val" id="mQty">0</span></div>
@@ -168,24 +129,32 @@
         </div>
     </div>
 
-
     <div id="total" class="page">
         <div style="text-align:center; margin-bottom:15px;"><input type="date" id="dashDate" class="u-input pink-date" style="max-width:250px; border-radius:50px;" onchange="syncDate(this.value)"></div>
         <div class="dashboard" id="mainDash">
-            <div class="stat-card" id="card-month" onclick="swapDash('month')"><div>รายเดือน</div><div class="stat-value" id="val-month">0</div></div>
             <div class="stat-card active" id="card-day" onclick="swapDash('day')"><div>รายวัน</div><div class="stat-value" id="val-day">0</div></div>
+            <div class="stat-card" id="card-month" onclick="swapDash('month')"><div>รายเดือน</div><div class="stat-value" id="val-month">0</div></div>
             <div class="stat-card" id="card-year" onclick="swapDash('year')"><div>รายปี</div><div class="stat-value" id="val-year">0</div></div>
         </div>
         <div class="box"><div id="sellerGrid"></div></div>
     </div>
 
-
     <div id="history" class="page">
         <div class="box">
             <div class="history-header">
-                <h3>📜</h3>
+                <h3>📜 ประวัติการขาย</h3>
                 <input type="date" id="histDate" class="u-input pink-date" style="max-width:220px; margin-bottom:0; border-radius:50px;" onchange="syncDate(this.value)">
             </div>
+            
+            <div class="search-box">
+                <input type="text" id="histSearch" class="search-input" placeholder="🔍 ค้นหาชื่อแก๊ง หรือ ชื่อหมอ..." oninput="renderHistory()">
+                <select id="histFilter" class="filter-select" onchange="renderHistory()">
+                    <option value="ทั้งหมด">ทั้งหมด</option>
+                    <option value="เพน">เพน</option>
+                    <option value="ศัลยกรรม">ศัลยกรรม</option>
+                </select>
+            </div>
+
             <div style="overflow-x:auto;">
                 <table class="bold-table" style="width:100%; min-width:1100px;">
                     <thead>
@@ -197,7 +166,6 @@
         </div>
     </div>
 </div>
-
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -214,8 +182,53 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const salesRef = ref(db, 'sales_data');
+    const usersRef = ref(db, 'portal_users');
+    const gangRef = ref(db, 'gang_list');
 
     let sales = [];
+
+    // ดึงรายชื่อหมอ
+    onValue(usersRef, (snapshot) => {
+        const users = snapshot.val();
+        const sellerSelect = document.getElementById('sellerSelect');
+        sellerSelect.innerHTML = '<option value="">-- เลือกชื่อหมอ --</option>';
+        if (users) {
+            const sortedNames = Object.keys(users)
+                .filter(name => users[name].canEdit === true)
+                .sort((a, b) => a.localeCompare(b, 'th'));
+            sortedNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name; option.textContent = name;
+                sellerSelect.appendChild(option);
+            });
+        }
+    });
+
+    // ดึงรายชื่อแก๊ง (Update หน้าบันทึก)
+    onValue(gangRef, (snapshot) => {
+        const data = snapshot.val();
+        const buyerSelect = document.getElementById('buyer');
+        
+        if(buyerSelect) buyerSelect.innerHTML = '<option value="ประชาชน">ประชาชน</option>';
+        
+        if (data) {
+            const sortedGangs = Object.entries(data).sort((a, b) => {
+                const nameA = (typeof a[1] === 'object') ? (a[1].name || "") : a[1];
+                const nameB = (typeof b[1] === 'object') ? (b[1].name || "") : b[1];
+                return nameA.localeCompare(nameB, 'th');
+            });
+
+            sortedGangs.forEach(([key, gangData]) => {
+                const gangName = (typeof gangData === 'object') ? gangData.name : gangData;
+
+                if(buyerSelect) {
+                    const option = document.createElement('option');
+                    option.value = gangName; option.textContent = gangName;
+                    buyerSelect.appendChild(option);
+                }
+            });
+        }
+    });
 
     onValue(salesRef, (snapshot) => {
         const data = snapshot.val();
@@ -276,21 +289,16 @@
 
     window.saveData = function() {
         let seller = document.getElementById('sellerSelect').value;
-        if(!seller) return;
+        if(!seller) { alert("กรุณาเลือกชื่อหมอก่อนบันทึก"); return; }
         let pQty = parseInt(document.getElementById('pQty').value)||0, sQty = parseInt(document.getElementById('sQty').value)||0;
         let type = document.getElementById('type').value, q = (type === "เพน") ? (pQty * 50) + sQty : pQty + sQty;
         if(q <= 0) return;
-
         const newData = {
             id: Date.now(),
             date: document.getElementById('recordDate').value,
-            type: type,
-            seller: seller,
-            buyer: document.getElementById('buyer').value,
-            qty: q,
-            total: parseInt(document.getElementById('liveTotal').innerText.replace(/,/g,''))
+            type: type, seller: seller, buyer: document.getElementById('buyer').value,
+            qty: q, total: parseInt(document.getElementById('liveTotal').innerText.replace(/,/g,''))
         };
-
         push(salesRef, newData);
         document.getElementById('pQty').value = ""; document.getElementById('sQty').value = ""; document.getElementById('liveTotal').innerText = "0";
     }
@@ -298,26 +306,33 @@
     window.renderTotal = function() {
         const date = document.getElementById('dashDate').value;
         let dSum = 0, mSum = 0, ySum = 0, drs = {};
-        
         sales.forEach(s => {
             if(s.date === date) { dSum += s.total; drs[s.seller] = (drs[s.seller]||0) + s.total; }
             if(s.date.startsWith(date.slice(0,7))) mSum += s.total;
             if(s.date.startsWith(date.slice(0,4))) ySum += s.total;
         });
-
         document.getElementById('val-day').innerText = dSum.toLocaleString();
         document.getElementById('val-month').innerText = mSum.toLocaleString();
         document.getElementById('val-year').innerText = ySum.toLocaleString();
-        
         let h = "";
-        for(let n in drs) h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`;
+        const sortedSellers = Object.keys(drs).sort((a, b) => a.localeCompare(b, 'th'));
+        sortedSellers.forEach(n => h += `<div class="seller-item"><span>หมอ ${n}</span><span style="color:var(--primary);">${drs[n].toLocaleString()}</span></div>`);
         document.getElementById('sellerGrid').innerHTML = h || "<center>ไม่มีข้อมูล</center>";
     }
 
     window.renderHistory = function() {
         const date = document.getElementById('histDate').value;
+        const searchTerm = document.getElementById('histSearch').value.toLowerCase();
+        const filterType = document.getElementById('histFilter').value;
+        
         let h = "", count = 1;
-        sales.filter(s => s.date === date).forEach((s) => {
+        
+        sales.filter(s => {
+            const isSameDate = s.date === date;
+            const matchesSearch = s.buyer.toLowerCase().includes(searchTerm) || s.seller.toLowerCase().includes(searchTerm);
+            const matchesFilter = filterType === "ทั้งหมด" || s.type === filterType;
+            return isSameDate && matchesSearch && matchesFilter;
+        }).forEach((s) => {
             h += `<tr><td>${count++}</td><td style="color:var(--primary);">${s.type}</td><td>${s.buyer}</td><td>${s.qty.toLocaleString()}</td><td style="color:var(--primary); font-size:22px;">${s.total.toLocaleString()}</td><td> ${s.seller}</td><td><button class="btn-del" onclick="delById('${s.firebaseKey}')">ลบ</button></td></tr>`;
         });
         document.getElementById('histBody').innerHTML = h || "<tr><td colspan='7' style='padding:50px; color:#999;'>ไม่มีข้อมูล</td></tr>";
