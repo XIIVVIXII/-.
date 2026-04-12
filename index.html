@@ -7,135 +7,306 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
-    :root { --primary: #ff85a2; --secondary: #4a90e2; }
-    *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #a0c7f3 0%, #a0c7f3 100%); background-attachment: fixed; padding: 15px; }
-    .container { max-width: 1150px; margin: auto; }
-
+        :root { --primary: #ff85a2; --secondary: #4a90e2; --edit-color: #2ecc71; --delete-color: #ff85a2; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #a0c7f3 0%, #a0c7f3 100%); background-attachment: fixed; padding: 15px; }
         
+        .min-card { background: #ffffff; border: 1px solid #f0f0f0; transition: all 0.5s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .min-card:hover { border-color: #e2e8f0; box-shadow: 0 20px 40px rgba(36, 27, 27, 0.03); transform: translateY(-5px); }
+        .soft-gradient { background: linear-gradient(to right, #000000, #807ef5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .fade-in { animation: fadeIn 1s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* การ์ดแบบมินิมอล เน้นเส้นขอบบางๆ และเงาฟุ้งๆ */
-        .min-card {
-            background: #ffffff;
-            border: 1px solid #f0f0f0;
-            transition: all 0.5s ease;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
+        /* Modal Styles */
+        #authModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 32px; width: 100%; max-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,0.12); text-align: center; border: 1px solid rgba(255,255,255,0.8); }
+        .modal-input { width: 100%; border: 1px solid #f0f0f0; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; text-align: center; font-size: 14px; transition: 0.3s; background: #fafafa; }
+        .modal-input:focus { border-color: var(--secondary); background: white; }
+        .modal-btn { width: 100%; padding: 14px; border-radius: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        .modal-link { font-size: 11px; color: #94a3b8; cursor: pointer; transition: 0.3s; padding: 5px; display: inline-block; }
+        .modal-link:hover { color: var(--secondary); }
 
-        .min-card:hover {
-            border-color: #e2e8f0;
-            box-shadow: 0 20px 40px rgba(36, 27, 27, 0.03);
-            transform: translateY(-5px);
-        }
+        #adminSection { display: none; margin-top: 30px; position: relative; }
+        .shield-btn { position: absolute; top: -10px; right: 10px; cursor: pointer; font-size: 24px; transition: 0.3s; z-index: 50; }
+        .shield-btn:hover { transform: scale(1.2) rotate(10deg); }
+        
+        #adminTableWrapper { display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); margin-top: 20px; }
+        .admin-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .tab-btn { padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; background: #f8fafc; color: #64748b; }
+        .tab-btn.active { background: var(--secondary); color: white; box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3); }
+        .admin-content-section { display: none; animation: fadeIn 0.4s ease; }
+        .admin-content-section.active { display: block; }
 
-        /* ปุ่มแบบ Minimal - เรียบง่ายแต่ชัดเจน */
-        .min-btn {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #000000;
-            border-bottom: 1px solid #201414;
-            padding-bottom: 4px;
-            transition: all 0.3s;
-        }
+        thead th { padding: 15px 10px; font-size: 10px; letter-spacing: 1px; text-align: center; border: none; }
+        .th-name { background-color: #f8fafc; color: #64748b; border-radius: 12px 0 0 12px; }
+        .th-pin { background-color: #fffbeb; color: #d97706; }
+        .th-edit { background-color: #f0fdf4; color: #16a34a; }
+        .th-delete { background-color: #fff1f2; color: #e11d48; }
+        .th-action { background-color: #f1f5f9; color: #475569; border-radius: 0 12px 12px 0; }
 
-        .min-card:hover .min-btn {
-            color: #5e8bcf;
-            border-color: #201414;
-        }
+        .user-name { font-weight: bold; transition: 0.3s; }
+        .status-none { color: #999; }
+        .status-edit { color: var(--edit-color); }
+        .status-delete { color: var(--delete-color); }
+        .status-both { background: linear-gradient(to right, var(--edit-color), var(--delete-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* หัวข้อไล่เฉดสีแบบจางๆ ไม่ตะโกน */
-        .soft-gradient {
-            background: linear-gradient(to right, #000000, #807ef5);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--secondary); cursor: pointer; }
 
-        .fade-in {
-            animation: fadeIn 1s ease-in;
-        }
+        .top-bar { position: fixed; top: 20px; right: 20px; display: flex; gap: 8px; z-index: 100; }
+        .auth-btn { font-size: 10px; padding: 8px 16px; border-radius: 20px; cursor: pointer; letter-spacing: 1px; font-weight: 600; transition: 0.3s; border: 1px solid transparent; }
+        .login-btn { background: #4a90e2; color: white; }
+        .logout-btn { background: rgba(0,0,0,0.1); color: white; }
+        .logout-btn:hover { background: rgba(255,0,0,0.3); }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .gang-box { margin-top: 10px; }
+        .rule-input { border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 15px; font-size: 13px; outline: none; }
+        .rule-btn { background: #4a90e2; color: white; padding: 8px 20px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        .rule-item { background: #fff5f8; padding: 10px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 12px; border: 1px solid #ffdce5; }
+        .gang-item { background: #f8fafc; padding: 8px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
     </style>
 </head>
 <body class="flex items-center justify-center p-6">
 
-    <div class="max-w-5xl w-full fade-in">
+    <div id="authModal">
+        <div class="modal-box fade-in">
+            <h3 id="modalTitle" class="text-[11px] font-bold tracking-[0.3em] uppercase text-slate-400 mb-8">LOGIN</h3>
+            
+            <div id="inputContainer"></div>
+
+            <button id="modalPrimaryBtn" class="modal-btn bg-[#4a90e2] text-white shadow-lg shadow-blue-200">ถัดไป</button>
+            
+            <div class="mt-6 flex flex-col gap-1">
+                <div id="modalLinks" class="flex justify-center gap-4"></div>
+                <span onclick="closeModal()" class="modal-link uppercase tracking-widest text-[9px] mt-2">ปิดหน้าต่าง</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="top-bar">
+        <div id="loginBtn" class="auth-btn login-btn" onclick="openAuth('login')">LOGIN</div>
+        <div id="logoutBtn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">LOGOUT</div>
+    </div>
+
+    <div class="max-w-5xl w-full fade-in relative">
+        <div id="adminSection">
+            <span class="shield-btn" onclick="toggleAdminTable()">🛡️</span>
+            <div id="adminTableWrapper" class="fade-in">
+                <h2 class="text-[11px] font-bold tracking-[0.3em] uppercase text-slate-400 mb-6 text-center">Management Panel</h2>
+                <div class="admin-tabs">
+                    <div class="tab-btn active" onclick="showTab('tab-users', this)">👥 สมาชิก</div>
+                    <div class="tab-btn" onclick="showTab('tab-gangs', this)">🏰 ตระกูล (Web 1 & 2)</div>
+                    <div class="tab-btn" onclick="showTab('tab-rules', this)">📜 กฎ (Web 1)</div>
+                </div>
+                <div id="tab-users" class="admin-content-section active"><div class="overflow-x-auto"><table><thead><tr><th class="th-name">NAME</th><th class="th-pin">PIN CODE</th><th class="th-edit">EDIT</th><th class="th-delete">DELETE</th><th class="th-action">ACTION</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div>
+                <div id="tab-gangs" class="admin-content-section"><div class="gang-box"><h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Gang Management</h3><div class="flex gap-2 mb-4"><input type="text" id="gangNameInput" class="rule-input w-full" placeholder="ชื่อตระกูล..."><button onclick="addGang()" class="rule-btn" style="background:var(--primary)">เพิ่มตระกูล +</button></div><div id="gangListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div></div></div>
+                <div id="tab-rules" class="admin-content-section"><div class="gang-box"><h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Rule Management</h3><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4"><input type="text" id="ruleNo" class="rule-input" placeholder="ข้อที่..."><input type="text" id="ruleDetail" class="rule-input md:col-span-2" placeholder="รายละเอียดกฎ..."><input type="number" id="ruleFine" class="rule-input" placeholder="ค่าปรับ..."><select id="ruleCategory" class="rule-input"><option value="basic">⚖️ กฎพื้นฐาน</option><option value="blacklist">🚫 Blacklist</option><option value="story">🔥 กฎสตอรี่</option></select><button onclick="addRule()" class="rule-btn md:col-span-4">เพิ่มข้อกฎ +</button></div><div id="ruleListDisplay" class="flex flex-col gap-1"></div></div></div>
+            </div>
+        </div>
         
-        <div class="text-center mb-24">
-            <h1 class="text-5xl font-extralight tracking-[0.2em] uppercase soft-gradient mb-4">
-                Time Town
-            </h1>
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-extralight tracking-[0.2em] uppercase soft-gradient mb-4">Time Town</h1>
             <div class="w-12 h-[1px] bg-gray-300 mx-auto mb-4"></div>
-     <p class="text-[10px] text-slate-400 tracking-[0.8em] uppercase font-bold italic">Service Directory</p>
+            <p id="welcomeMsg" class="text-[10px] text-slate-400 tracking-[0.8em] uppercase font-bold italic">Service Directory</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <div onclick="enterWeb('web1/index.html')" class="min-card p-12 rounded-2xl text-center">
-                <div class="text-4xl mb-8 opacity-60">📢</div>
-                <h2 class="text-lg font-normal mb-2 tracking-wide">ประกาศ</h2>
-                <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">ประกาศคูลดาวน์<br>และ บันทึกต่างๆ</p>
-                <span class="min-btn">Explore</span>
-            </div>
-
-            <div onclick="enterWeb('web2/index.html')" class="min-card p-12 rounded-2xl text-center">
-                <div class="text-4xl mb-8 opacity-60">💰</div>
-                <h2 class="text-lg font-normal mb-2 tracking-wide">รายรับ รพ.</h2>
-                <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายรับ-จ่าย<br>และ รวมยอด</p>
-                <span class="min-btn">Explore</span>
-            </div>
-
-            <div onclick="enterWeb('web3/index.html')" class="min-card p-12 rounded-2xl text-center">
-                <div class="text-4xl mb-8 opacity-60">☁️</div>
-                <h2 class="text-lg font-normal mb-2 tracking-wide">ทำเนียบหมอ</h2>
-               <p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายชื่อหมอ<br>และ ข้อมูลเข้า-ออก</p>
-                <span class="min-btn">Explore</span>
-            </div>
-
+            <div onclick="checkAndGo('web1/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">📢</div><h2 class="text-lg font-normal mb-2 tracking-wide">ประกาศ</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">ประกาศคูลดาวน์ และ บันทึก</p></div>
+            <div onclick="checkAndGo('web2/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">💰</div><h2 class="text-lg font-normal mb-2 tracking-wide">รายรับ รพ.</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายรับ-จ่าย และ รวมยอด</p></div>
+            <div onclick="checkAndGo('web3/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">☁️</div><h2 class="text-lg font-normal mb-2 tracking-wide">ทำเนียบหมอ</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายชื่อ และ ข้อมูลเข้า-ออก</p></div>
         </div>
-
-        <div class="mt-32 text-center">
-            <p class="text-[9px] text-gray-300 tracking-[0.4em] font-light uppercase">
-                Est. 2026 &bull; Time Town Project
-            </p>
-        </div>
+        <div class="mt-24 text-center text-[9px] text-gray-300 tracking-[0.4em] uppercase">Est. 2026 &bull; Time Town Project</div>
     </div>
-    <script>
-        // ตั้งค่ารหัสผ่านแยกตามชื่อ (สามารถเปลี่ยนตัวเลขรหัสได้ที่นี่)
-        const ADMIN_PASSWORDS = {
-            "High": "1111",
-            "Cookie": "2222",
-            "Jaokha": "9988"
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get, set, child, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDErmAM7dA7NJ19jPLGgqKEqLpFW2qwdN0",
+            authDomain: "emss-ebb6e.firebaseapp.com",
+            projectId: "emss-ebb6e",
+            databaseURL: "https://emss-ebb6e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            appId: "1:154198162358:web:f16c1ffd840ceaa8845f17"
         };
 
-        function enterWeb(url) {
-            const user = prompt("กรุณาระบุชื่อผู้ใช้งาน (Admin):");
-            
-            // ตรวจสอบว่ามีชื่อนี้ในระบบไหม
-            if (user && ADMIN_PASSWORDS.hasOwnProperty(user)) {
-                const pin = prompt(`สวัสดีคุณ ${user}, กรุณาใส่รหัส PIN 4 หลัก:`);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const ADMINS = ["High", "Cookie", "Jaokha"];
+        const SUPER_ADMIN = "Jaokha";
+
+        let currentMode = 'login';
+        let pendingRedirect = '';
+
+        window.openAuth = (mode, redirect = '') => {
+            currentMode = mode;
+            pendingRedirect = redirect;
+            const container = document.getElementById('inputContainer');
+            const links = document.getElementById('modalLinks');
+            const btn = document.getElementById('modalPrimaryBtn');
+            const title = document.getElementById('modalTitle');
+
+            document.getElementById('authModal').style.display = 'flex';
+            title.innerText = mode.toUpperCase().replace('CHANGE', 'CHANGE PIN');
+            container.innerHTML = '';
+            links.innerHTML = '';
+
+            // คืนค่าฟังก์ชัน Register ใน Modal ให้ใช้งานได้ปกติ
+            if (mode === 'login' || mode === 'register') {
+                container.innerHTML = `
+                    <input type="text" id="authName" class="modal-input" placeholder="ใส่ชื่อของคุณ">
+                    <input type="password" id="authPin" class="modal-input" placeholder="${mode==='login'?'ใส่รหัส PIN':'ตั้งรหัส PIN 4 หลัก'}" maxlength="4">
+                `;
+                btn.innerText = mode === 'login' ? 'เข้าสู่ระบบ' : 'ยืนยันลงทะเบียน';
+                btn.onclick = () => mode === 'login' ? finishLogin() : finishRegister();
                 
-                // ตรวจสอบรหัสผ่านของชื่อนั้นๆ
-                if (pin === ADMIN_PASSWORDS[user]) {
-                    window.location.href = url;
-                } else if (pin !== null) {
-                    alert("รหัส PIN ไม่ถูกต้อง!");
-                }
-            } else if (user === null) {
-                // กรณีปิดหน้าต่าง prompt (กดยกเลิก)
-            } else {
-                alert("ชื่อผู้ใช้ไม่ถูกต้อง หรือคุณไม่มีสิทธิ์เข้าถึง");
+                links.innerHTML = mode === 'login' 
+                    ? `<span class="modal-link" onclick="openAuth('register')">ลงทะเบียนสมาชิก</span><span class="modal-link" onclick="openAuth('change')">เปลี่ยนรหัส PIN</span>`
+                    : `<span class="modal-link" onclick="openAuth('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</span>`;
+            } 
+            else if (mode === 'change') {
+                container.innerHTML = `
+                    <input type="text" id="changeName" class="modal-input" placeholder="ใส่ชื่อของคุณ">
+                    <input type="password" id="newPin" class="modal-input" placeholder="ตั้งรหัส PIN ใหม่ 4 หลัก" maxlength="4">
+                `;
+                btn.innerText = 'ยืนยันการเปลี่ยนรหัส';
+                btn.onclick = handleChangePin;
+                links.innerHTML = `<span class="modal-link" onclick="openAuth('login')">ยกเลิกและกลับไปหน้าล็อกอิน</span>`;
+            }
+        };
+
+        window.closeModal = () => { document.getElementById('authModal').style.display = 'none'; };
+
+        async function finishRegister() {
+            const name = document.getElementById('authName').value.trim();
+            const pin = document.getElementById('authPin').value;
+            if (!name || pin.length !== 4) return alert("กรุณากรอกข้อมูลให้ครบ (PIN 4 หลัก)");
+
+            const snapshot = await get(child(ref(db), `portal_users/${name}`));
+            if (snapshot.exists()) return alert("ชื่อนี้ถูกใช้ไปแล้ว");
+
+            await set(ref(db, `portal_users/${name}`), { name, pin, canEdit: false, canDelete: false });
+            alert("ลงทะเบียนสำเร็จ! รอ Admin อนุมัติยศ");
+            closeModal();
+        }
+
+        async function finishLogin() {
+            const name = document.getElementById('authName').value.trim();
+            const pin = document.getElementById('authPin').value;
+            if (!name || !pin) return alert("กรุณากรอกชื่อและรหัส");
+
+            const snapshot = await get(child(ref(db), `portal_users/${name}`));
+            if (!snapshot.exists()) return alert("ไม่พบชื่อในระบบ");
+
+            if (snapshot.val().pin === pin) {
+                localStorage.setItem('portalUser', name);
+                pendingRedirect ? window.location.href = pendingRedirect : location.reload();
+            } else alert("PIN ไม่ถูกต้อง");
+        }
+
+        async function handleChangePin() {
+            const name = document.getElementById('changeName').value.trim();
+            const newP = document.getElementById('newPin').value;
+
+            if (!name || newP.length !== 4) return alert("กรุณากรอกชื่อและ PIN ใหม่ 4 หลัก");
+
+            const snapshot = await get(child(ref(db), `portal_users/${name}`));
+            if (!snapshot.exists()) return alert("ไม่พบชื่อผู้ใช้ในระบบ");
+            
+            await update(ref(db, `portal_users/${name}`), { pin: newP });
+            alert("เปลี่ยนรหัส PIN สำเร็จแล้ว!");
+            openAuth('login');
+        }
+
+        window.showTab = (tabId, btn) => {
+            document.querySelectorAll('.admin-content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        };
+
+        window.toggleAdminTable = () => {
+            const wrapper = document.getElementById('adminTableWrapper');
+            wrapper.style.display = wrapper.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.checkAndGo = (url) => {
+            localStorage.getItem('portalUser') ? window.location.href = url : openAuth('login', url);
+        };
+
+        window.logout = () => { localStorage.clear(); location.reload(); };
+
+        const currentUser = localStorage.getItem('portalUser');
+        if (currentUser) {
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('welcomeMsg').innerText = `WELCOME: ${currentUser}`;
+            if (ADMINS.includes(currentUser)) {
+                document.getElementById('adminSection').style.display = 'block';
+                onValue(ref(db, 'portal_users'), (snap) => renderUserTable(snap.val()));
+                loadGangs(); loadRules();
             }
         }
+
+        function renderUserTable(users) {
+            const tbody = document.getElementById('userTableBody');
+            if(!tbody) return; tbody.innerHTML = "";
+            for (let name in users) {
+                const isMain = ADMINS.includes(name);
+                const { canEdit, canDelete, pin } = users[name];
+                let nClass = "user-name status-none";
+                if (canEdit && canDelete) nClass = "user-name status-both";
+                else if (canEdit) nClass = "user-name status-edit";
+                else if (canDelete) nClass = "user-name status-delete";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="${nClass}">${name}</span> ${isMain?'⭐':''}</td>
+                    <td class="text-xs text-gray-400">${currentUser===SUPER_ADMIN?pin:'****'}</td>
+                    <td><input type="checkbox" ${canEdit?'checked':''} onchange="updatePerm('${name}','canEdit',this.checked)"></td>
+                    <td><input type="checkbox" ${canDelete?'checked':''} onchange="updatePerm('${name}','canDelete',this.checked)"></td>
+                    <td>${!isMain?`<button onclick="deleteUser('${name}')" class="text-red-300 font-bold text-[10px]">DEL</button>`:'-'}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        window.updatePerm = (n, f, v) => update(ref(db, `portal_users/${n}`), {[f]: v});
+        window.deleteUser = (n) => confirm(`ลบ ${n}?`) && remove(ref(db, `portal_users/${n}`));
+
+        function loadGangs() {
+            onValue(ref(db, 'gang_list'), (snap) => {
+                const display = document.getElementById('gangListDisplay'); if(!display) return;
+                display.innerHTML = ""; const gangs = snap.val();
+                if(gangs) Object.entries(gangs).forEach(([k, v]) => {
+                    const div = document.createElement('div'); div.className = "gang-item";
+                    div.innerHTML = `<span>${v.name||v}</span><button onclick="deleteGang('${k}')" class="text-red-400">✕</button>`;
+                    display.appendChild(div);
+                });
+            });
+        }
+        window.addGang = () => { const i = document.getElementById('gangNameInput'); i.value && push(ref(db, 'gang_list'), {name: i.value, selected: true}) && (i.value=""); };
+        window.deleteGang = (k) => confirm("ลบ?") && remove(ref(db, `gang_list/${k}`));
+
+        function loadRules() {
+            onValue(ref(db, 'rule_list'), (snap) => {
+                const display = document.getElementById('ruleListDisplay'); if(!display) return;
+                display.innerHTML = ""; const rules = snap.val();
+                if(rules) Object.entries(rules).forEach(([k, v]) => {
+                    const div = document.createElement('div'); div.className = "rule-item";
+                    div.innerHTML = `<div><span class="font-bold text-blue-500">[ข้อ ${v.no}]</span> ${v.detail}</div><button onclick="deleteRule('${k}')" class="text-red-400">✕</button>`;
+                    display.appendChild(div);
+                });
+            });
+        }
+        window.addRule = () => {
+            const no = document.getElementById('ruleNo').value; const det = document.getElementById('ruleDetail').value;
+            const fine = document.getElementById('ruleFine').value; const cat = document.getElementById('ruleCategory').value;
+            if(no && det && fine) { push(ref(db, 'rule_list'), {no, detail: det, fine, category: cat, selected: true}); document.getElementById('ruleNo').value=""; }
+        };
+        window.deleteRule = (k) => confirm("ลบ?") && remove(ref(db, `rule_list/${k}`));
     </script>
-
-
 </body>
 </html>
