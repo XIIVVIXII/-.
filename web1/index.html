@@ -89,6 +89,13 @@ button.copy{
     padding:8px 14px;
     border-radius:10px;
     cursor:pointer;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* สไตล์ปุ่มตอนคัดลอกสำเร็จ */
+button.copy.success {
+    background: #28a745 !important;
+    color: white !important;
 }
 
 .log{
@@ -511,7 +518,6 @@ window.warn = function(){
     }
     document.getElementById("warnFiveM").innerText=fivem;
     document.getElementById("warnDiscord").innerText=discord;
-    saveHistory(discord);
 }
 
 window.cooldown = function(){
@@ -523,7 +529,6 @@ window.cooldown = function(){
     let text=`ประกาศ รบกวน แก๊ง ${gang} ออกจากพื้นที่โรงพยาบาลภายใน ระยะเวลา 10 นาที เริ่มตั้งแต่เวลา ${start} ถึง ${stop} น. ขอบคุณครับ/ค่ะ`;
     document.getElementById("coolFiveM").innerText="/gov "+text;
     document.getElementById("coolDiscord").innerText=`\`\`\`\n${text}\n\`\`\`\n<@&1335511632587128954> <@&1364843875105243206>`;
-    saveHistory(text);
 }
 
 window.caseMsg = function(){
@@ -532,13 +537,26 @@ window.caseMsg = function(){
     let discord=`รบกวน เบอร์ ${phone} แพทย์ไม่พบร่างผู้สลบกรุณาติดต่อ หรือ แจ้งจุดสลบ ได้เลยค่ะ/ครับ\n<@&1335511632587128954><@&1364843875105243206>`;
     document.getElementById("caseGame").innerText=game;
     document.getElementById("caseDiscord").innerText=discord;
-    saveHistory(discord);
 }
 
 window.copyText = function(id,btn){
-    navigator.clipboard.writeText(document.getElementById(id).innerText);
-    btn.innerText="คัดลอกแล้ว ✓";
-    setTimeout(() => { btn.innerText = "คัดลอก"; }, 2000);
+    const text = document.getElementById(id).innerText;
+    if(!text) return;
+    
+    navigator.clipboard.writeText(text);
+    
+    // เปลี่ยนสถานะปุ่มเป็นสีเขียวและข้อความสำเร็จ
+    btn.innerText="คัดลอกสำเร็จ ✓";
+    btn.classList.add("success");
+    
+    // บันทึกลงหน้าประวัติ
+    saveHistory(text);
+    
+    // คืนค่าปุ่มเดิมหลังจาก 2 วินาที
+    setTimeout(() => { 
+        btn.innerText = "คัดลอก"; 
+        btn.classList.remove("success");
+    }, 2000);
 }
 
 showPage("warnPage");
