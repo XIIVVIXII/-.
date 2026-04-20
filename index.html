@@ -66,14 +66,12 @@
         .rule-item { background: #fff5f8; padding: 10px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 12px; border: 1px solid #ffdce5; }
         .gang-item { background: #f8fafc; padding: 8px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
         
-        /* New Styles for Logs */
         .log-item { font-size: 11px; padding: 8px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 2px; }
         .log-header { display: flex; justify-content: space-between; align-items: center; }
         .log-detail { font-size: 10px; color: #64748b; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; margin-top: 4px; }
         .log-tag-loc { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #e0f2fe; color: #0369a1; font-weight: bold; }
         .restore-btn { background: #2ecc71; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
 
-        /* Custom Scrollbar for Admin Panel */
         #adminTableWrapper::-webkit-scrollbar { width: 6px; }
         #adminTableWrapper::-webkit-scrollbar-track { background: transparent; }
         #adminTableWrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -166,10 +164,8 @@
         let currentMode = 'login';
         let pendingRedirect = '';
         const currentUser = localStorage.getItem('portalUser');
-
         const thaiSort = (a, b) => a.localeCompare(b, 'th', { sensitivity: 'base' });
 
-        // ปรับปรุงฟังก์ชัน saveLog ให้รับ location
         async function saveLog(action, detail, location = "หน้าหลัก") {
             push(ref(db, 'activity_logs'), {
                 user: currentUser || 'Unknown',
@@ -179,6 +175,42 @@
                 timestamp: serverTimestamp()
             });
         }
+
+        // --- เพิ่มฟังก์ชันพิเศษสำหรับ Jaokha ---
+        window.editUsername = async (oldName) => {
+            if (currentUser !== SUPER_ADMIN) return;
+            const newName = prompt(`เปลี่ยนชื่อสำหรับคุณ ${oldName} เป็น:`, oldName);
+            if (newName && newName !== oldName) {
+                const snapshot = await get(child(ref(db), `portal_users/${newName}`));
+                if (snapshot.exists()) return alert("ชื่อนี้มีในระบบแล้ว");
+
+                const userSnap = await get(child(ref(db), `portal_users/${oldName}`));
+                const userData = userSnap.val();
+                userData.name = newName;
+
+                await set(ref(db, `portal_users/${newName}`), userData);
+                await remove(ref(db, `portal_users/${oldName}`));
+                saveLog("ADMIN_EDIT_NAME", `Jaokha changed ${oldName} to ${newName}`);
+                alert("เปลี่ยนชื่อสำเร็จ!");
+            }
+        };
+
+        window.editUserPin = async (name, oldPin) => {
+            if (currentUser !== SUPER_ADMIN) return;
+            const newPin = prompt(`ตั้งรหัส PIN ใหม่สำหรับ ${name} (4 หลัก):`, oldPin);
+            if (newPin && newPin.length === 4) {
+                await update(ref(db, `portal_users/${name}`), { pin: newPin });
+                saveLog("ADMIN_EDIT_PIN", `Jaokha changed PIN for ${name}`);
+                alert("เปลี่ยน PIN สำเร็จ!");
+            } else if (newPin) alert("PIN ต้องมี 4 หลัก");
+        };
+
+        // Event: กด Enter ใน Modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.getElementById('authModal').style.display === 'flex') {
+                document.getElementById('modalPrimaryBtn').click();
+            }
+        });
 
         window.openAuth = (mode, redirect = '') => {
             currentMode = mode;
@@ -200,7 +232,6 @@
                 `;
                 btn.innerText = mode === 'login' ? 'เข้าสู่ระบบ' : 'ยืนยันลงทะเบียน';
                 btn.onclick = () => mode === 'login' ? finishLogin() : finishRegister();
-                
                 links.innerHTML = mode === 'login' 
                     ? `<span class="modal-link" onclick="openAuth('register')">ลงทะเบียนสมาชิก</span><span class="modal-link" onclick="openAuth('change')">เปลี่ยนรหัส PIN</span>`
                     : `<span class="modal-link" onclick="openAuth('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</span>`;
@@ -298,10 +329,14 @@
                 else if (canEdit) nClass = "user-name status-edit";
                 else if (canDelete) nClass = "user-name status-delete";
 
+                const isJaokha = (currentUser === SUPER_ADMIN);
+                const nameClickAttr = isJaokha ? `onclick="editUsername('${name}')" style="cursor:pointer;" title="จิ้มเปลี่ยนชื่อ"` : "";
+                const pinDisplay = isJaokha ? `<span onclick="editUserPin('${name}', '${pin}')" class="underline decoration-dotted text-amber-600 font-bold cursor-pointer">${pin}</span>` : '****';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><span class="${nClass}">${name}</span> ${isMain?'⭐':''}</td>
-                    <td class="text-xs text-gray-400">${currentUser===SUPER_ADMIN?pin:'****'}</td>
+                    <td><span class="${nClass}" ${nameClickAttr}>${name}</span> ${isMain?'⭐':''}</td>
+                    <td class="text-xs text-gray-400">${pinDisplay}</td>
                     <td><input type="checkbox" ${canEdit?'checked':''} onchange="updatePerm('${name}','canEdit',this.checked)"></td>
                     <td><input type="checkbox" ${canDelete?'checked':''} onchange="updatePerm('${name}','canDelete',this.checked)"></td>
                     <td>${!isMain?`<button onclick="deleteUser('${name}')" class="text-red-300 font-bold text-[10px]">DEL</button>`:'-'}</td>
@@ -387,7 +422,6 @@
             }
         };
 
-        // --- Jaokha Special Functions: Centralized Logs & Recycle ---
         function loadSpecialLogs() {
             onValue(ref(db, 'activity_logs'), (snap) => {
                 const logBox = document.getElementById('logDisplay');
@@ -417,39 +451,21 @@
                 trashBox.innerHTML = "";
                 const trash = snap.val();
                 if(!trash) { trashBox.innerHTML = "<p class='text-[10px] text-center mt-4 opacity-50'>ถังขยะว่างเปล่า</p>"; return; }
-
-                // รายการกู้คืนจากทุกส่วน
                 if(trash.gangs) Object.entries(trash.gangs).forEach(([k, v]) => {
                     trashBox.innerHTML += `<div class="log-item"><div class="log-header"><span>🏰 ${v.name}</span><button onclick="restoreItem('gangs','${k}')" class="restore-btn">กู้คืน</button></div><div class="text-[9px] text-red-400">ลบโดย: ${v.deletedBy || 'Admin'}</div></div>`;
                 });
                 if(trash.rules) Object.entries(trash.rules).forEach(([k, v]) => {
                     trashBox.innerHTML += `<div class="log-item"><div class="log-header"><span>📜 กฎข้อ ${v.no}</span><button onclick="restoreItem('rules','${k}')" class="restore-btn">กู้คืน</button></div><div class="text-[9px] text-red-400">ลบโดย: ${v.deletedBy || 'Admin'}</div></div>`;
                 });
-                if(trash.web_data) Object.entries(trash.web_data).forEach(([k, v]) => {
-                    trashBox.innerHTML += `<div class="log-item"><div class="log-header"><span>🌐 ข้อมูลจาก ${v.location}</span><button onclick="restoreItem('web_data','${k}')" class="restore-btn">กู้คืน</button></div><div class="log-detail">${v.detail || v.name || ''}</div></div>`;
-                });
             });
         }
 
         window.restoreItem = async (type, id) => {
-            let path = '';
-            if(type === 'gangs') path = 'gang_list';
-            else if(type === 'rules') path = 'rule_list';
-            else if(type === 'web_data') {
-                // สำหรับข้อมูลจากเว็บย่อย ให้ดึง path เดิมกลับไป
-                const trashSnap = await get(child(ref(db), `trash/web_data/${id}`));
-                path = trashSnap.val().originalPath;
-            }
-
+            let path = (type === 'gangs') ? 'gang_list' : 'rule_list';
             const snap = await get(child(ref(db), `trash/${type}/${id}`));
             if(snap.exists()){
                 const data = snap.val();
-                // ลบฟิลด์ที่ใช้สำหรับถังขยะออกก่อนคืนค่า
-                delete data.deletedBy;
-                delete data.deletedAt;
-                delete data.type;
-                if(data.originalPath) delete data.originalPath;
-
+                delete data.deletedBy; delete data.deletedAt; delete data.type;
                 await set(ref(db, `${path}/${id}`), data);
                 await remove(ref(db, `trash/${type}/${id}`));
                 saveLog("RESTORE", `Restored item to ${path}`, "ระบบกู้คืน");
