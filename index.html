@@ -64,7 +64,17 @@
         .rule-input { border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 15px; font-size: 13px; outline: none; }
         .rule-btn { background: #4a90e2; color: white; padding: 8px 20px; border-radius: 10px; font-size: 12px; font-weight: bold; }
         .rule-item { background: #fff5f8; padding: 10px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 12px; border: 1px solid #ffdce5; }
-        .gang-item { background: #f8fafc; padding: 8px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
+        
+        /* สไตล์ตระกูลที่แยกประเภท */
+        .gang-item { background: white; padding: 8px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 13px; font-weight: 600; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .item-fam { border-left: 4px solid var(--primary) !important; background: #fff5f8; }
+        .item-gang { border-left: 4px solid var(--secondary) !important; background: #f8fafc; }
+
+        /* Type Switcher */
+        .type-btn { padding: 8px 12px; border-radius: 10px; font-size: 11px; cursor: pointer; font-weight: bold; border: 2px solid transparent; transition: 0.2s; }
+        .type-btn.active-fam { background: #fff5f8; color: var(--primary); border-color: var(--primary); }
+        .type-btn.active-gang { background: #f0f7ff; color: var(--secondary); border-color: var(--secondary); }
+        .type-btn.inactive { background: #f1f5f9; color: #94a3b8; }
         
         .log-item { font-size: 11px; padding: 8px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 2px; }
         .log-header { display: flex; justify-content: space-between; align-items: center; }
@@ -110,7 +120,26 @@
                 
                 <div id="tab-users" class="admin-content-section active"><div class="overflow-x-auto"><table><thead><tr><th class="th-name">NAME</th><th class="th-pin">PIN CODE</th><th class="th-edit">EDIT</th><th class="th-delete">DELETE</th><th class="th-action">ACTION</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div>
                 
-                <div id="tab-gangs" class="admin-content-section"><div class="gang-box"><h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Gang Management</h3><div class="flex gap-2 mb-4"><input type="text" id="gangNameInput" class="rule-input w-full" placeholder="ชื่อตระกูล..."><button onclick="addGang()" class="rule-btn" style="background:var(--primary)">เพิ่มตระกูล +</button></div><div id="gangListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div></div></div>
+                <div id="tab-gangs" class="admin-content-section">
+                    <div class="gang-box">
+                        <h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Gang Management</h3>
+                        
+                        <div class="flex flex-col gap-3 mb-4">
+                            <!-- ตัวเลือกว่าจะเพิ่ม แฟม หรือ แก๊ง -->
+                            <div class="flex gap-2">
+                                <div id="typeFam" class="type-btn active-fam" onclick="setGangType('fam')">🌸 FAMILY</div>
+                                <div id="typeGang" class="type-btn inactive" onclick="setGangType('gang')">🛡️ GANG</div>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <input type="text" id="gangNameInput" class="rule-input w-full" placeholder="พิมพ์ชื่อตระกูลที่นี่...">
+                                <button onclick="addGang()" class="rule-btn whitespace-nowrap" id="addGangBtn" style="background:var(--primary)">เพิ่มตระกูล +</button>
+                            </div>
+                        </div>
+
+                        <div id="gangListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
                 
                 <div id="tab-rules" class="admin-content-section"><div class="gang-box"><h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Rule Management</h3><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4"><input type="text" id="ruleNo" class="rule-input" placeholder="ข้อที่..."><input type="text" id="ruleDetail" class="rule-input md:col-span-2" placeholder="รายละเอียดกฎ..."><input type="number" id="ruleFine" class="rule-input" placeholder="ค่าปรับ..."><select id="ruleCategory" class="rule-input"><option value="basic">⚖️ กฎพื้นฐาน</option><option value="blacklist">🚫 Blacklist</option><option value="story">🔥 กฎสตอรี่</option></select><button onclick="addRule()" class="rule-btn md:col-span-4">เพิ่มข้อกฎ +</button></div><div id="ruleListDisplay" class="flex flex-col gap-1"></div></div></div>
 
@@ -163,6 +192,7 @@
 
         let currentMode = 'login';
         let pendingRedirect = '';
+        let selectedGangType = 'fam'; // Default type
         const currentUser = localStorage.getItem('portalUser');
         const thaiSort = (a, b) => a.localeCompare(b, 'th', { sensitivity: 'base' });
 
@@ -176,7 +206,6 @@
             });
         }
 
-        // --- เพิ่มฟังก์ชันพิเศษสำหรับ Jaokha ---
         window.editUsername = async (oldName) => {
             if (currentUser !== SUPER_ADMIN) return;
             const newName = prompt(`เปลี่ยนชื่อสำหรับคุณ ${oldName} เป็น:`, oldName);
@@ -205,7 +234,6 @@
             } else if (newPin) alert("PIN ต้องมี 4 หลัก");
         };
 
-        // Event: กด Enter ใน Modal
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && document.getElementById('authModal').style.display === 'flex') {
                 document.getElementById('modalPrimaryBtn').click();
@@ -357,30 +385,74 @@
             }
         };
 
+        // --- ส่วนจัดการตระกูล ---
+        window.setGangType = (type) => {
+            selectedGangType = type;
+            const famBtn = document.getElementById('typeFam');
+            const gangBtn = document.getElementById('typeGang');
+            const addBtn = document.getElementById('addGangBtn');
+
+            if(type === 'fam') {
+                famBtn.className = "type-btn active-fam";
+                gangBtn.className = "type-btn inactive";
+                addBtn.style.background = "var(--primary)";
+            } else {
+                famBtn.className = "type-btn inactive";
+                gangBtn.className = "type-btn active-gang";
+                addBtn.style.background = "var(--secondary)";
+            }
+        };
+
         function loadGangs() {
             onValue(ref(db, 'gang_list'), (snap) => {
-                const display = document.getElementById('gangListDisplay'); if(!display) return;
-                display.innerHTML = ""; const gangs = snap.val();
+                const display = document.getElementById('gangListDisplay'); 
+                if(!display) return;
+                display.innerHTML = ""; 
+                const gangs = snap.val();
+                
                 if(gangs) {
-                    const sortedGangs = Object.entries(gangs).sort((a, b) => thaiSort(a[1].name || a[1], b[1].name || b[1]));
+                    const sortedGangs = Object.entries(gangs).sort((a, b) => 
+                        thaiSort(a[1].name || a[1], b[1].name || b[1])
+                    );
+
                     sortedGangs.forEach(([k, v]) => {
-                        const div = document.createElement('div'); div.className = "gang-item";
-                        div.innerHTML = `<span>${v.name||v}</span><button onclick="deleteGang('${k}', '${v.name||v}')" class="text-red-400">✕</button>`;
+                        const name = v.name || v;
+                        // ใช้ข้อมูล type จาก DB ถ้าไม่มีให้เดาจากชื่อ (เพื่อรองรับข้อมูลเก่า)
+                        const isFamily = v.type === 'fam' || name.includes("แฟม") || name.toLowerCase().includes("fam");
+                        
+                        const div = document.createElement('div'); 
+                        div.className = `gang-item ${isFamily ? 'item-fam' : 'item-gang'}`;
+                        
+                        div.innerHTML = `
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] font-bold ${isFamily ? 'text-[#ff85a2]' : 'text-[#4a90e2]'}">
+                                    ${isFamily ? '● FAM' : '○ GANG'}
+                                </span>
+                                <span>${name}</span>
+                            </div>
+                            <button onclick="deleteGang('${k}', '${name}')" class="text-red-300 hover:text-red-500 transition-colors">✕</button>
+                        `;
                         display.appendChild(div);
                     });
                 }
             });
         }
+
         window.addGang = () => { 
             const i = document.getElementById('gangNameInput'); 
             if(i.value) {
-                push(ref(db, 'gang_list'), {name: i.value, selected: true});
-                saveLog("ADD_GANG", `Added gang: ${i.value}`);
+                push(ref(db, 'gang_list'), {
+                    name: i.value, 
+                    type: selectedGangType,
+                    selected: true
+                });
+                saveLog("ADD_GANG", `Added ${selectedGangType}: ${i.value}`);
                 i.value=""; 
             }
         };
+
         window.deleteGang = async (k, name) => {
-            if(confirm("ลบตระกูลนี้?")) {
+            if(confirm(`ต้องการลบ "${name}" ใช่หรือไม่?`)) {
                 const snap = await get(child(ref(db), `gang_list/${k}`));
                 await set(ref(db, `trash/gangs/${k}`), {...snap.val(), deletedBy: currentUser, deletedAt: serverTimestamp(), type: 'gang'});
                 await remove(ref(db, `gang_list/${k}`));
