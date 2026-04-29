@@ -31,9 +31,12 @@
     .dropdown-list { 
         position: absolute; top: 100%; left: 0; right: 0; 
         background: white; border-radius: 15px; border: 2px solid var(--primary);
-        max-height: 250px; overflow-y: auto; z-index: 2000; 
+        max-height: 350px; overflow-y: auto; z-index: 2000; 
         display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         margin-top: -10px;
+    }
+    .dropdown-header {
+        background: #fdf2f5; padding: 10px; font-size: 16px; color: #666; text-align: center; font-weight: 800; border-bottom: 1px solid #eee; border-top: 1px solid #eee;
     }
     .dropdown-item { 
         padding: 12px; cursor: pointer; font-weight: 900; font-size: 18px; 
@@ -191,7 +194,7 @@
     const db = getDatabase(app);
     const salesRef = ref(db, 'sales_data'), usersRef = ref(db, 'portal_users'), gangRef = ref(db, 'gang_list'), lockRef = ref(db, 'closed_days');
 
-    let sales = [], closedDays = {}, gangs = ["ประชาชน"], currentFocus = -1;
+    let sales = [], closedDays = {}, gangs = [], currentFocus = -1;
 
     function getCurrentUser() { return localStorage.getItem('portalUser') || "Guest"; }
 
@@ -206,9 +209,17 @@
 
     onValue(gangRef, (snap) => {
         const data = snap.val();
-        gangs = ["ประชาชน"];
-        if(data) Object.values(data).forEach(g => gangs.push(typeof g === 'object' ? g.name : g));
-        gangs.sort((a,b)=>a.localeCompare(b,'th'));
+        let rawList = [];
+        if(data) Object.values(data).forEach(g => rawList.push(typeof g === 'object' ? g.name : g));
+        
+        const sorter = (a, b) => a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' });
+        
+        // กรองแยกกลุ่ม
+        const gangList = rawList.filter(n => n.includes("แก๊ง")).sort(sorter);
+        const famList = rawList.filter(n => !n.includes("แก๊ง") && n !== "ประชาชน").sort(sorter);
+        
+        // รวมแบบเรียงลำดับ: แก๊งก่อน -> ประชาชน -> แฟม
+        gangs = [...gangList, "ประชาชน", ...famList];
     });
 
     onValue(salesRef, (snap) => {
@@ -226,19 +237,36 @@
         const list = document.getElementById('gangDropdown');
         list.innerHTML = "";
         currentFocus = -1;
+
         const filtered = gangs.filter(g => g.toLowerCase().includes(val));
+        
         if(filtered.length > 0) {
             list.style.display = "block";
-            filtered.forEach((g, idx) => {
-                const div = document.createElement("div");
-                div.className = "dropdown-item";
-                div.innerHTML = g;
-                div.onclick = () => selectGang(g);
-                list.appendChild(div);
-            });
+            
+            const gGroup = filtered.filter(n => n.includes("แก๊ง"));
+            const fGroup = filtered.filter(n => !n.includes("แก๊ง"));
+
+            if(gGroup.length > 0) {
+                let h = document.createElement("div"); h.className="dropdown-header"; h.innerText="-- กลุ่มแก๊ง --";
+                list.appendChild(h);
+                gGroup.forEach(g => createItem(g, list));
+            }
+
+            if(fGroup.length > 0) {
+                // เอาหัวข้อ -- กลุ่มแฟม / ประชาชน -- ออกแล้ว
+                fGroup.forEach(g => createItem(g, list));
+            }
         } else { list.style.display = "none"; }
         updateLive();
     };
+
+    function createItem(g, container) {
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.innerHTML = g;
+        div.onclick = () => selectGang(g);
+        container.appendChild(div);
+    }
 
     window.showGangs = function() { if(!document.getElementById('buyer').value) filterGangs(); };
     
@@ -249,12 +277,10 @@
         document.getElementById('sellerSelect').focus();
     }
 
-    // ปิด dropdown เมื่อคลิกที่อื่น
     document.addEventListener("click", (e) => {
         if(e.target.id !== "buyer") document.getElementById('gangDropdown').style.display = "none";
     });
 
-    // คีย์บอร์ดสำหรับเลือกใน Dropdown
     document.addEventListener('keydown', function(e) {
         const list = document.getElementById('gangDropdown');
         if(list.style.display === "block") {
@@ -262,22 +288,25 @@
             if (e.key === "ArrowDown") {
                 currentFocus++;
                 addActive(items);
-                items[currentFocus].scrollIntoView({ block: 'nearest' });
+                if(items[currentFocus]) items[currentFocus].scrollIntoView({ block: 'nearest' });
             } else if (e.key === "ArrowUp") {
                 currentFocus--;
                 addActive(items);
-                items[currentFocus].scrollIntoView({ block: 'nearest' });
+                if(items[currentFocus]) items[currentFocus].scrollIntoView({ block: 'nearest' });
             } else if (e.key === "Enter") {
                 e.preventDefault();
                 if (currentFocus > -1 && items[currentFocus]) items[currentFocus].click();
             }
         } else if (e.key === "Enter") {
-            if(document.getElementById('home').style.display === 'block' && !closedDays[document.getElementById('recordDate').value]) saveData();
+            const activePage = document.querySelector('.page[style*="display: block"]');
+            if(activePage && activePage.id === 'home' && e.target.id !== 'histSearch') {
+                if(!closedDays[document.getElementById('recordDate').value]) saveData();
+            }
         }
     });
 
     function addActive(items) {
-        if (!items) return false;
+        if (!items || items.length === 0) return false;
         removeActive(items);
         if (currentFocus >= items.length) currentFocus = 0;
         if (currentFocus < 0) currentFocus = (items.length - 1);
@@ -287,7 +316,7 @@
         for (let i = 0; i < items.length; i++) items[i].classList.remove("selected");
     }
 
-    // --- ฟังก์ชันอื่นๆ ---
+    // --- ส่วนการจัดการข้อมูลพื้นฐานอื่นๆ ---
     window.onload = () => { 
         document.getElementById('displayUserName').innerText = "👤 " + getCurrentUser();
         syncDate(new Date().toLocaleDateString('sv-SE')); showPage('home'); 
@@ -331,7 +360,7 @@
         if(!seller || !buyer) return alert("กรุณากรอกข้อมูลให้ครบ");
         let pQty = parseInt(document.getElementById('pQty').value)||0, sQty = parseInt(document.getElementById('sQty').value)||0;
         let type = document.getElementById('type').value, q = (type === "เพน") ? (pQty * 50) + sQty : pQty + sQty;
-        if(q <= 0) return;
+        if(q <= 0) return alert("กรุณาระบุจำนวน");
         push(salesRef, { id: Date.now(), date: document.getElementById('recordDate').value, type, seller, buyer, qty: q, total: parseInt(document.getElementById('liveTotal').innerText.replace(/,/g,'')) });
         document.getElementById('pQty').value = ""; document.getElementById('sQty').value = ""; document.getElementById('buyer').value = "";
         document.getElementById('liveTotal').innerText = "0"; document.getElementById('buyer').focus();
@@ -363,8 +392,25 @@
     };
 
     window.delById = (k, d) => { if(!closedDays[d] && confirm("ลบรายการนี้?")) remove(ref(db, `sales_data/${k}`)); };
-    window.doCalc = () => { /* ฟังก์ชันคำนวณเหมืองฟาร์มคงเดิม */ };
-    window.swapDash = (t) => { /* ฟังก์ชันสลับ Dashboard คงเดิม */ };
+    
+    window.doCalc = () => {
+        let fTotal = 0, fQty = 0, mTotal = 0, mQty = 0;
+        document.querySelectorAll('.f-item').forEach(row => {
+            let r = parseInt(row.dataset.rate), p = parseInt(row.querySelector('.p-in').value)||0, s = parseInt(row.querySelector('.s-in').value)||0;
+            let q = (p*50)+s, money = q*r*40; fTotal += money; fQty += q; row.querySelector('.res').innerText = money.toLocaleString();
+        });
+        document.getElementById('fQty').innerText = fQty.toLocaleString(); document.getElementById('fMoney').innerText = fTotal.toLocaleString();
+        document.querySelectorAll('.m-item').forEach(row => {
+            let r = parseInt(row.dataset.rate), p = parseInt(row.querySelector('.p-in').value)||0, s = parseInt(row.querySelector('.s-in').value)||0;
+            let q = (p*50)+s, money = q*r*40; mTotal += money; mQty += q; row.querySelector('.res').innerText = money.toLocaleString();
+        });
+        document.getElementById('mQty').innerText = mQty.toLocaleString(); document.getElementById('mMoney').innerText = mTotal.toLocaleString();
+    };
+
+    window.swapDash = (t) => {
+        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+        document.getElementById('card-'+t).classList.add('active');
+    };
 </script>
 </body>
 </html>
