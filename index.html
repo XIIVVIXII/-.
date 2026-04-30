@@ -251,13 +251,19 @@
         }
 
         window.updateRank = async (targetName, isAdmin) => {
-            if (currentUser !== SUPER_ADMIN) return;
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return alert("คุณไม่มีสิทธิ์จัดการยศ");
+            
             await update(ref(db, `portal_users/${targetName}`), { isAdmin: isAdmin });
             saveLog("RANK_UPDATE", `Changed ${targetName} admin status to ${isAdmin}`);
         };
 
         window.editUsername = async (oldName) => {
-            if (currentUser !== SUPER_ADMIN) return;
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return; 
+
             const newName = prompt(`เปลี่ยนชื่อสำหรับคุณ ${oldName} เป็น:`, oldName);
             if (newName && newName.trim() !== "" && newName !== oldName) {
                 const snapshot = await get(child(ref(db), `portal_users/${newName.trim()}`));
@@ -267,17 +273,20 @@
                 userData.name = newName.trim();
                 await set(ref(db, `portal_users/${newName.trim()}`), userData);
                 await remove(ref(db, `portal_users/${oldName}`));
-                saveLog("ADMIN_EDIT_NAME", `Jaokha changed ${oldName} to ${newName}`);
+                saveLog("ADMIN_EDIT_NAME", `${currentUser} changed ${oldName} to ${newName}`);
                 alert("เปลี่ยนชื่อสำเร็จ!");
             }
         };
 
         window.editUserPin = async (name, oldPin) => {
-            if (currentUser !== SUPER_ADMIN) return;
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return;
+
             const newPin = prompt(`ตั้งรหัส PIN ใหม่สำหรับ ${name} (4 หลัก):`, oldPin);
             if (newPin && newPin.length === 4) {
                 await update(ref(db, `portal_users/${name}`), { pin: newPin });
-                saveLog("ADMIN_EDIT_PIN", `Jaokha changed PIN for ${name}`);
+                saveLog("ADMIN_EDIT_PIN", `${currentUser} changed PIN for ${name}`);
                 alert("เปลี่ยน PIN สำเร็จ!");
             } else if (newPin) alert("PIN ต้องมี 4 หลัก");
         };
@@ -289,7 +298,7 @@
             const snap = await get(child(ref(db), `portal_users/${currentUser}`));
             const myData = snap.val() || {};
             const iCanDelete = (myData && myData.canDelete) || currentUser === SUPER_ADMIN;
-            const iCanManage = currentUser === SUPER_ADMIN;
+            const iCanManage = (myData && myData.isAdmin) || currentUser === SUPER_ADMIN;
 
             const sortedNames = Object.keys(users).sort(thaiSort);
             
@@ -309,9 +318,9 @@
                               onclick="editUsername('${name}')">${name}</span>
                     </td>
                     <td>
-                        <span class="${iCanManage?'cursor-pointer underline decoration-dotted text-amber-600 font-bold':''}" 
+                        <span class="${(currentUser === SUPER_ADMIN)?'cursor-pointer underline decoration-dotted text-amber-600 font-bold':''}" 
                               onclick="editUserPin('${name}', '${u.pin}')">
-                              ${iCanManage ? u.pin : '****'}
+                              ${(currentUser === SUPER_ADMIN) ? u.pin : '****'}
                         </span>
                     </td>
                     <td>
@@ -327,8 +336,11 @@
             });
         }
 
-        window.updatePerm = (n, f, v) => {
-            if (currentUser !== SUPER_ADMIN) return;
+        window.updatePerm = async (n, f, v) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return alert("คุณไม่มีสิทธิ์แก้ไขสิทธิ์");
+            
             update(ref(db, `portal_users/${n}`), {[f]: v});
             saveLog("PERMISSION", `Changed ${n} ${f} to ${v}`);
         };
@@ -592,7 +604,6 @@
             confirm(`ลบ ${k}?`) && remove(ref(db, `market_items/${k}`));
         };
 
-        // --- ส่วนจัดการกฎ เชื่อมกับ rule_list (Web 1) ---
         window.addRule = async () => {
             const snap = await get(child(ref(db), `portal_users/${currentUser}`));
             if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
