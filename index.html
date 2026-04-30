@@ -282,15 +282,20 @@
             } else if (newPin) alert("PIN ต้องมี 4 หลัก");
         };
 
-        function renderUserTable(users) {
+        async function renderUserTable(users) {
             const tbody = document.getElementById('userTableBody');
             if(!tbody || !users) return; tbody.innerHTML = "";
+            
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myPerms = snap.val() || {};
+            const iCanDelete = myPerms.canDelete || currentUser === SUPER_ADMIN;
+            const iCanManage = currentUser === SUPER_ADMIN;
+
             const sortedNames = Object.keys(users).sort(thaiSort);
             
             sortedNames.forEach(name => {
                 const u = users[name];
                 const isJaokha = (name === SUPER_ADMIN);
-                const canManage = (currentUser === SUPER_ADMIN);
                 
                 let nClass = "user-name status-none";
                 if (u.canEdit && u.canDelete) nClass = "user-name status-both";
@@ -300,37 +305,44 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
-                        <span class="${nClass} ${canManage?'cursor-pointer underline decoration-dotted':''}" 
+                        <span class="${nClass} ${iCanManage?'cursor-pointer underline decoration-dotted':''}" 
                               onclick="editUsername('${name}')">${name}</span>
                     </td>
                     <td>
-                        <span class="${canManage?'cursor-pointer underline decoration-dotted text-amber-600 font-bold':''}" 
+                        <span class="${iCanManage?'cursor-pointer underline decoration-dotted text-amber-600 font-bold':''}" 
                               onclick="editUserPin('${name}', '${u.pin}')">
-                              ${canManage ? u.pin : '****'}
+                              ${iCanManage ? u.pin : '****'}
                         </span>
                     </td>
                     <td>
                         <input type="checkbox" ${u.isAdmin ? 'checked' : ''} 
-                               ${(!canManage || isJaokha) ? 'disabled' : ''} 
+                               ${(!iCanManage || isJaokha) ? 'disabled' : ''} 
                                onchange="updateRank('${name}', this.checked)">
                     </td>
-                    <td><input type="checkbox" ${u.canEdit?'checked':''} onchange="updatePerm('${name}','canEdit',this.checked)"></td>
-                    <td><input type="checkbox" ${u.canDelete?'checked':''} onchange="updatePerm('${name}','canDelete',this.checked)"></td>
-                    <td>${!isJaokha ? `<button onclick="deleteUser('${name}')" class="text-red-400 font-bold text-[10px]">DEL</button>` : '-'}</td>
+                    <td><input type="checkbox" ${u.canEdit?'checked':''} ${!iCanManage?'disabled':''} onchange="updatePerm('${name}','canEdit',this.checked)"></td>
+                    <td><input type="checkbox" ${u.canDelete?'checked':''} ${!iCanManage?'disabled':''} onchange="updatePerm('${name}','canDelete',this.checked)"></td>
+                    <td>${(!isJaokha && iCanDelete) ? `<button onclick="deleteUser('${name}')" class="text-red-400 font-bold text-[10px]">DEL</button>` : '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
         window.updatePerm = (n, f, v) => {
+            if (currentUser !== SUPER_ADMIN) return;
             update(ref(db, `portal_users/${n}`), {[f]: v});
             saveLog("PERMISSION", `Changed ${n} ${f} to ${v}`);
         };
         
-        window.deleteUser = (n) => {
-            if(confirm(`ลบ ${n}?`)) {
-                saveLog("DELETE_USER", `Deleted user ${n}`);
-                remove(ref(db, `portal_users/${n}`));
+        window.deleteUser = async (n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            if (u && (u.canDelete || currentUser === SUPER_ADMIN)) {
+                if(confirm(`ลบ ${n}?`)) {
+                    saveLog("DELETE_USER", `Deleted user ${n}`);
+                    remove(ref(db, `portal_users/${n}`));
+                }
+            } else {
+                alert("คุณไม่มีสิทธิ์ลบข้อมูล");
             }
         };
 
@@ -394,10 +406,12 @@
             document.getElementById('welcomeMsg').innerText = `WELCOME: ${currentUser}`;
             get(child(ref(db), `portal_users/${currentUser}`)).then(snap => {
                 const u = snap.val();
-                if (u && (u.isAdmin || currentUser === SUPER_ADMIN)) {
+                if (u && (u.isAdmin === true || currentUser === SUPER_ADMIN)) {
                     document.getElementById('adminSection').style.display = 'block';
                     onValue(ref(db, 'portal_users'), s => renderUserTable(s.val()));
                     loadGangs(); loadRules(); loadMedicines(); loadMarketItems();
+                } else {
+                    document.getElementById('adminSection').style.display = 'none';
                 }
             });
         }
@@ -420,13 +434,21 @@
                 });
             });
         }
-        window.addGang = () => {
+        window.addGang = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
             const i = document.getElementById('gangNameInput');
             if(i.value) { push(ref(db, 'gang_list'), {name: i.value, type: selectedGangType}); i.value=""; }
         };
-        window.deleteGang = (k, n) => confirm(`ลบ ${n}?`) && remove(ref(db, `gang_list/${k}`));
+        window.deleteGang = async (k, n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canDelete && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบ ${n}?`) && remove(ref(db, `gang_list/${k}`));
+        };
 
-        window.saveMedicine = () => {
+        window.saveMedicine = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
             const type = document.getElementById('medType').value;
             const nameInput = document.getElementById('medName').value;
             const citizen = document.getElementById('pCitizen').value || 0;
@@ -447,7 +469,9 @@
             document.getElementById('packCitizen').value = ""; document.getElementById('packGang').value = ""; document.getElementById('packFam').value = "";
         };
 
-        window.startInlineEdit = (element, dbPath, fieldPath) => {
+        window.startInlineEdit = async (element, dbPath, fieldPath) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับแก้ไขข้อมูล");
             const oldValue = element.innerText;
             const originalElement = element.cloneNode(true);
             const input = document.createElement('input');
@@ -462,126 +486,122 @@
                     await update(ref(db, dbPath), { [fieldPath]: newValue });
                     saveLog("INLINE_EDIT", `Updated ${dbPath}/${fieldPath} to ${newValue}`);
                 }
-                originalElement.innerText = newValue; 
                 input.replaceWith(originalElement);
+                originalElement.innerText = newValue;
             };
             input.onblur = finishEdit;
-            input.onkeydown = (e) => { 
-                if(e.key === 'Enter') finishEdit();
-                if(e.key === 'Escape') { isFinished = true; originalElement.innerText = oldValue; input.replaceWith(originalElement); }
-            };
+            input.onkeydown = (e) => { if (e.key === 'Enter') finishEdit(); if (e.key === 'Escape') { isFinished=true; input.replaceWith(originalElement); } };
         };
-
-        window.saveMarketItem = () => {
-            const name = document.getElementById('marketItemName').value;
-            const cat = document.getElementById('marketCategory').value;
-            const rate = document.getElementById('marketRate').value || 0;
-            const pack = document.getElementById('marketPack').value || 0;
-            if(!name) return alert("ระบุชื่อสินค้า");
-            set(ref(db, `market_items/${name}`), { name, category: cat, rate: Number(rate), pack: Number(pack) });
-            document.getElementById('marketItemName').value = "";
-        };
-
-        function loadMarketItems() {
-            onValue(ref(db, 'market_items'), (snap) => {
-                const display = document.getElementById('marketListDisplay'); if(!display) return;
-                display.innerHTML = ""; const items = snap.val();
-                if(items) {
-                    const sorted = Object.entries(items).sort((a,b)=>thaiSort(a[0], b[0]));
-                    sorted.forEach(([k, v]) => {
-                        const cardClass = v.category === 'mine' ? 'card-mine' : 'card-farm';
-                        const div = document.createElement('div');
-                        div.className = `price-card ${cardClass} relative`;
-                        div.innerHTML = `
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="font-bold text-slate-700">${v.category==='mine'?'⛏️':'🌱'} ${v.name}</div>
-                                <button onclick="deleteMarketItem('${k}')" class="text-slate-300 hover:text-red-500">✕</button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-slate-50 p-2 rounded-lg text-center">
-                                    <div class="price-label">ราคาเรท</div>
-                                    <span class="editable-value" onclick="startInlineEdit(this, 'market_items/${k}', 'rate')">${v.rate}</span>
-                                </div>
-                                <div class="bg-slate-50 p-2 rounded-lg text-center">
-                                    <div class="price-label">แพ็คละ</div>
-                                    <span class="editable-value" onclick="startInlineEdit(this, 'market_items/${k}', 'pack')">${v.pack}</span>
-                                </div>
-                            </div>
-                        `;
-                        display.appendChild(div);
-                    });
-                }
-            });
-        }
-        window.deleteMarketItem = (k) => confirm(`ลบรายการนี้?`) && remove(ref(db, `market_items/${k}`));
 
         function loadMedicines() {
             onValue(ref(db, 'service_prices'), (snap) => {
                 const display = document.getElementById('medicineListDisplay'); if(!display) return;
                 display.innerHTML = ""; const meds = snap.val();
-                if(meds) {
-                    Object.entries(meds).sort((a,b)=>thaiSort(a[0], b[0])).forEach(([k, v]) => {
-                        const div = document.createElement('div'); div.className = "price-card";
-                        div.innerHTML = `
-                            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                                <span class="font-bold text-slate-800">${v.type === 'ยา' ? '💊' : (v.type === 'เพน' ? '💉' : '✂️')} ${v.name}</span>
-                                <button onclick="deleteMed('${k}')" class="text-xs text-red-300 hover:text-red-500">DELETE</button>
+                if(meds) Object.entries(meds).forEach(([k,v])=>{
+                    const div = document.createElement('div'); div.className = "price-card fade-in";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div><span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold uppercase">${v.type}</span><h4 class="text-sm font-bold mt-1">${v.name}</h4></div>
+                            <button onclick="deleteMedicine('${k}')" class="text-red-300 hover:text-red-500 text-xs">✕ ลบ</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="text-center p-2 bg-slate-50 rounded-lg">
+                                <div class="price-label">ประชาชน</div>
+                                <div class="editable-value" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'citizen')">${v.prices?.citizen || 0}</div>
+                                <div class="text-[9px] text-slate-400 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'citizen')">${v.packs?.citizen || 0}</span></div>
                             </div>
-                            <div class="grid grid-cols-3 gap-2">
-                                <div class="text-center p-2 bg-blue-50 rounded-xl">
-                                    <div class="price-label">ประชาชน</div>
-                                    <div class="editable-value text-blue-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'citizen')">${v.prices.citizen}</div>
-                                    <div class="text-[9px] text-slate-400 mt-1">Pack: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'citizen')">${v.packs?.citizen||0}</span></div>
-                                </div>
-                                <div class="text-center p-2 bg-slate-50 rounded-xl">
-                                    <div class="price-label">แก๊ง</div>
-                                    <div class="editable-value text-slate-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'gang')">${v.prices.gang}</div>
-                                    <div class="text-[9px] text-slate-400 mt-1">Pack: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'gang')">${v.packs?.gang||0}</span></div>
-                                </div>
-                                <div class="text-center p-2 bg-pink-50 rounded-xl">
-                                    <div class="price-label">แฟม</div>
-                                    <div class="editable-value text-pink-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'fam')">${v.prices.fam}</div>
-                                    <div class="text-[9px] text-slate-400 mt-1">Pack: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'fam')">${v.packs?.fam||0}</span></div>
-                                </div>
+                            <div class="text-center p-2 bg-blue-50 rounded-lg">
+                                <div class="price-label">แก๊ง</div>
+                                <div class="editable-value text-blue-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'gang')">${v.prices?.gang || 0}</div>
+                                <div class="text-[9px] text-blue-300 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'gang')">${v.packs?.gang || 0}</span></div>
                             </div>
-                        `;
-                        display.appendChild(div);
-                    });
-                }
+                            <div class="text-center p-2 bg-pink-50 rounded-lg">
+                                <div class="price-label">แฟม</div>
+                                <div class="editable-value text-pink-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'fam')">${v.prices?.fam || 0}</div>
+                                <div class="text-[9px] text-pink-300 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'fam')">${v.packs?.fam || 0}</span></div>
+                            </div>
+                        </div>
+                    `;
+                    display.appendChild(div);
+                });
             });
         }
-        window.deleteMed = (k) => confirm(`ลบ ${k}?`) && remove(ref(db, `service_prices/${k}`));
+        window.deleteMedicine = async (k) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canDelete && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบรายการนี้?`) && remove(ref(db, `service_prices/${k}`));
+        };
 
+        window.saveMarketItem = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
+            const name = document.getElementById('marketItemName').value;
+            const cat = document.getElementById('marketCategory').value;
+            const rate = document.getElementById('marketRate').value;
+            const pack = document.getElementById('marketPack').value;
+            if(!name || !rate) return alert("ระบุชื่อและราคา");
+            set(ref(db, `market_items/${name}`), { name, category: cat, rate: Number(rate), pack: Number(pack||0) });
+            document.getElementById('marketItemName').value = ""; document.getElementById('marketRate').value = ""; document.getElementById('marketPack').value = "";
+        };
+        function loadMarketItems() {
+            onValue(ref(db, 'market_items'), (snap) => {
+                const display = document.getElementById('marketListDisplay'); if(!display) return;
+                display.innerHTML = ""; const items = snap.val();
+                if(items) Object.entries(items).forEach(([k,v])=>{
+                    const div = document.createElement('div'); 
+                    div.className = `price-card fade-in ${v.category==='farm'?'card-farm':(v.category==='mine'?'card-mine':'')}`;
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div><div class="text-[9px] uppercase font-bold opacity-40">${v.category}</div><div class="font-bold text-sm">${v.name}</div></div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <div class="price-label">ราคาเรท</div>
+                                    <div class="editable-value text-lg" onclick="startInlineEdit(this, 'market_items/${k}', 'rate')">${v.rate}</div>
+                                </div>
+                                <button onclick="deleteMarketItem('${k}')" class="text-red-300">✕</button>
+                            </div>
+                        </div>
+                    `;
+                    display.appendChild(div);
+                });
+            });
+        }
+        window.deleteMarketItem = async (k) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canDelete && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบ ${k}?`) && remove(ref(db, `market_items/${k}`));
+        };
+
+        window.addRule = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
+            const no = document.getElementById('ruleNo').value;
+            const det = document.getElementById('ruleDetail').value;
+            const fine = document.getElementById('ruleFine').value;
+            const cat = document.getElementById('ruleCategory').value;
+            if(!no || !det) return alert("กรอกข้อมูลกฎ");
+            set(ref(db, `law_rules/${no}`), { no: Number(no), detail: det, fine: Number(fine||0), category: cat });
+            document.getElementById('ruleNo').value=""; document.getElementById('ruleDetail').value=""; document.getElementById('ruleFine').value="";
+        };
         function loadRules() {
-            onValue(ref(db, 'rule_list'), (snap) => {
+            onValue(ref(db, 'law_rules'), (snap) => {
                 const display = document.getElementById('ruleListDisplay'); if(!display) return;
                 display.innerHTML = ""; const rules = snap.val();
-                if(rules) {
-                    const cats = { basic: "⚖️ กฎพื้นฐาน", blacklist: "🚫 Blacklist", story: "🔥 กฎสตอรี่" };
-                    Object.keys(cats).forEach(catKey => {
-                        const catRules = Object.entries(rules).filter(([k,v])=>v.category===catKey).sort((a,b)=>a[1].no-b[1].no);
-                        if(catRules.length > 0) {
-                            const header = document.createElement('div'); header.className = "category-header";
-                            header.innerText = cats[catKey]; display.appendChild(header);
-                            catRules.forEach(([k, v]) => {
-                                const div = document.createElement('div'); div.className = "rule-item";
-                                div.innerHTML = `<div><span class="font-bold text-slate-400 mr-2">#${v.no}</span> ${v.detail}</div>
-                                    <div class="flex items-center gap-4"><span class="text-red-500 font-bold">${Number(v.fine).toLocaleString()}</span>
-                                    <button onclick="deleteRule('${k}')" class="text-slate-300 hover:text-red-500">✕</button></div>`;
-                                display.appendChild(div);
-                            });
-                        }
-                    });
-                }
+                if(rules) Object.values(rules).sort((a,b)=>a.no-b.no).forEach(r => {
+                    const div = document.createElement('div'); div.className = "rule-item";
+                    div.innerHTML = `<div><span class="font-bold text-blue-500 mr-2">ข้อ ${r.no}</span> <span class="text-slate-600">${r.detail}</span></div>
+                                     <div class="flex items-center gap-3"><span class="text-xs font-bold text-amber-600">${r.fine.toLocaleString()}</span>
+                                     <button onclick="deleteRule('${r.no}')" class="text-red-300">✕</button></div>`;
+                    display.appendChild(div);
+                });
             });
         }
-        window.addRule = () => {
-            const no = document.getElementById('ruleNo').value; const detail = document.getElementById('ruleDetail').value;
-            const fine = document.getElementById('ruleFine').value || 0; const category = document.getElementById('ruleCategory').value;
-            if(no && detail) { push(ref(db, 'rule_list'), { no: Number(no), detail, fine: Number(fine), category, selected: true });
-                document.getElementById('ruleNo').value=""; document.getElementById('ruleDetail').value=""; document.getElementById('ruleFine').value=""; }
+        window.deleteRule = async (n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canDelete && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบข้อ ${n}?`) && remove(ref(db, `law_rules/${n}`));
         };
-        window.deleteRule = (k) => confirm('ลบกฎข้อนี้?') && remove(ref(db, `rule_list/${k}`));
+
     </script>
 </body>
 </html>
