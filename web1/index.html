@@ -309,7 +309,7 @@ option { color: black !important; font-weight: normal; background: white; }
 <script type="module">
 // --- 1. Firebase Setup ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
       apiKey: "AIzaSyDErmAM7dA7NJ19jPLGgqKEqLpFW2qwdN0",
@@ -325,11 +325,35 @@ const logRef = ref(db, 'announcement_logs');
 const gangListRef = ref(db, 'gang_list');
 const ruleListRef = ref(db, 'rule_list');
 
+// --- 🔒 เพิ่มระบบเช็คสิทธิ์ 🔒 ---
+async function checkPermission() {
+    const userName = localStorage.getItem('portalUser');
+    if (!userName) {
+        alert("❌ กรุณาเข้าสู่ระบบก่อนทำรายการ");
+        return false;
+    }
+    const dbRef = ref(db);
+    try {
+        const snapshot = await get(child(dbRef, `portal_users/${userName}`));
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            if (userData.isAdmin || userData.canEdit) {
+                return true;
+            }
+        }
+        alert("⚠️ คุณไม่มียศหรือสิทธิ์ในการดำเนินการ (ติดต่อ Admin)");
+        return false;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
 function customSort(a, b) {
     return a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' });
 }
 
-// --- ฟังก์ชันดึงชื่ออัตโนมัติ (เก็บไว้ใช้หลังบ้าน) ---
+// --- ฟังก์ชันดึงชื่ออัตโนมัติ ---
 function getAutoUser() {
     return localStorage.getItem('portalUser') || "ไม่ระบุชื่อ";
 }
@@ -494,7 +518,8 @@ function date(){
 
 // --- 3. Firebase Data Handling ---
 
-window.saveHistory = function(text){
+window.saveHistory = async function(text){
+    // ระบบบันทึกจะเช็คผ่าน copyText แล้ว แต่ใส่กันไว้อีกชั้น
     const user = getAutoUser(); 
     push(logRef, {
         text: text,
@@ -526,7 +551,8 @@ onValue(logRef, (snapshot) => {
     }
 });
 
-window.deleteLog = function(key){
+window.deleteLog = async function(key){
+    if(!(await checkPermission())) return; // 🔒 เช็คสิทธิ์ก่อนลบ
     if(confirm("ยืนยันการลบรายการนี้?")){
         remove(ref(db, `announcement_logs/${key}`));
     }
@@ -591,10 +617,12 @@ window.caseMsg = function(){
     document.getElementById("caseDiscord").innerText=discord;
 }
 
-window.copyText = function(id,btn){
+window.copyText = async function(id,btn){
     const text = document.getElementById(id).innerText;
     if(!text) return;
     
+    if(!(await checkPermission())) return; // 🔒 เช็คสิทธิ์ก่อนให้คัดลอกและบันทึก
+
     navigator.clipboard.writeText(text);
     btn.innerText="คัดลอกสำเร็จ ✓";
     btn.classList.add("success");
