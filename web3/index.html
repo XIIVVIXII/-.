@@ -86,15 +86,15 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">ฝ่ายที่ 1 (ตระกูล/แก๊ง)</label>
-                    <select id="sideA" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer">
-                        <option value="">-- เลือกรอบเมืองฝ่ายที่ 1 --</option>
-                    </select>
+                    <input type="text" id="sideA" list="sideAOptions" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer" placeholder="-- เลือกรอบเมือง หรือพิมพ์ชื่อฝ่ายที่ 1 เอง --" onfocus="this.value=''">
+                    <datalist id="sideAOptions">
+                        </datalist>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">ฝ่ายที่ 2 (ตระกูล/แก๊ง)</label>
-                    <select id="sideB" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer">
-                        <option value="">-- เลือกรอบเมืองฝ่ายที่ 2 --</option>
-                    </select>
+                    <input type="text" id="sideB" list="sideBOptions" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer" placeholder="-- เลือกรอบเมือง หรือพิมพ์ชื่อฝ่ายที่ 2 เอง --" onfocus="this.value=''">
+                    <datalist id="sideBOptions">
+                        </datalist>
                 </div>
             </div>
 
@@ -184,31 +184,41 @@
         onValue(ref(db, 'gang_list'), (snapshot) => {
             const data = snapshot.val();
             
-            selectA.innerHTML = '<option value="">-- เลือกรอบเมืองฝ่ายที่ 1 --</option>';
-            selectB.innerHTML = '<option value="">-- เลือกรอบเมืองฝ่ายที่ 2 --</option>';
+            const sideAOptions = document.getElementById('sideAOptions');
+            const sideBOptions = document.getElementById('sideBOptions');
+            
+            if (sideAOptions) sideAOptions.innerHTML = '';
+            if (sideBOptions) sideBOptions.innerHTML = '';
 
             if (data) {
                 // เรียงลำดับตัวอักษรภาษาไทย ก-ฮ ตามชื่อแก๊ง เพื่อความง่ายต่อการค้นหาบนคอมพิวเตอร์
                 const sortedGangs = Object.entries(data).sort((a, b) => {
-                    const nameA = a[1].name || a[1];
-                    const nameB = b[1].name || b[1];
+                    const nameA = a[1].thaiName || a[1].name || a[1];
+                    const nameB = b[1].thaiName || b[1].name || b[1];
                     return nameA.localeCompare(nameB, 'th', { sensitivity: 'base' });
                 });
 
                 sortedGangs.forEach(([key, value]) => {
                     const gangName = value.name || value;
+                    const thaiName = value.thaiName || ''; // เพิ่มการดึงค่า thaiName จาก Firebase
                     const typeEmoji = value.type === 'fam' ? '🌸' : '🛡️';
-                    const optText = `${typeEmoji} ${gangName}`;
+                    
+                    // ปรับรูปแบบแสดงผลในตัวเลือก: ถ้ามีชื่อไทยให้แสดงต่อท้ายชื่ออังกฤษ เช่น 🛡️ O7X — โอเซเว่นเอ็กซ์
+                    const optText = `${typeEmoji} ${gangName}${thaiName ? ` — ${thaiName}` : ''}`;
 
-                    const optionA = document.createElement('option');
-                    optionA.value = gangName;
-                    optionA.textContent = optText;
-                    selectA.appendChild(optionA);
+                    if (sideAOptions) {
+                        const optionA = document.createElement('option');
+                        optionA.value = gangName;
+                        optionA.textContent = optText;
+                        sideAOptions.appendChild(optionA);
+                    }
 
-                    const optionB = document.createElement('option');
-                    optionB.value = gangName;
-                    optionB.textContent = optText;
-                    selectB.appendChild(optionB);
+                    if (sideBOptions) {
+                        const optionB = document.createElement('option');
+                        optionB.value = gangName;
+                        optionB.textContent = optText;
+                        sideBOptions.appendChild(optionB);
+                    }
                 });
             }
         });
@@ -231,8 +241,8 @@
         });
 
         // ผูก Event ติดตามการเปลี่ยนค่าต่าง ๆ บนหน้าจอเพื่ออัปเดตข้อความทันที
-        selectA.addEventListener('change', updateGovTexts);
-        selectB.addEventListener('change', updateGovTexts);
+        selectA.addEventListener('input', updateGovTexts);
+        selectB.addEventListener('input', updateGovTexts);
         startTimeInput.addEventListener('input', updateGovTexts); // กรณีแอดมินใช้เมาส์หรือคีย์บอร์ดปรับเวลาเอง
 
         // ฟังก์ชันคลิกเดียวเพื่อคัดลอกข้อความลง Clipboard ของคอมพิวเตอร์
