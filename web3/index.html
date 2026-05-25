@@ -3,361 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTown EMS System</title>
+    <title>Time Town | ระบบประกาศไฟต์ตรง</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- เพิ่ม ethers.js สำหรับ Web3 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; }
-        .glass { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .bg-animate { 
-            background: linear-gradient(-45deg, #7d93f1, #d3acec, #3069e2, #ff77ff); 
-            background-size: 400% 400%; 
-            animation: gradient 15s ease infinite; 
+        :root { 
+            --primary: #ff85a2; 
+            --secondary: #4a90e2; 
+            --pastel-pink: #fff5f8;
+            --pastel-blue: #f0f7ff;
         }
-        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        
-        .nav-container { background: transparent; display: flex; gap: 0.8rem; justify-content: center; padding: 10px; flex-wrap: wrap; }
-        .nav-btn { 
-            padding: 10px 20px; 
-            border-radius: 14px; 
-            font-weight: 900; 
-            font-size: 15px; 
-            transition: all 0.3s; 
-            color: #000000; 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            cursor: pointer; 
-            background: rgba(255, 255, 255, 0.15); 
-            backdrop-filter: blur(4px); 
+        *, *::before, *::after { box-sizing: border-box; }
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background: linear-gradient(135deg, #a0c7f3 0%, #d2e4f9 100%); 
+            background-attachment: fixed;
+            min-height: 100vh;
         }
-        .nav-btn.active { 
-            background: rgba(255, 255, 255, 0.9); 
-            color: #000000; 
-            border-color: rgba(255, 255, 255, 1);
+        /* การ์ดสไตล์มินิมอลพาสเทล */
+        .soft-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+            border-radius: 24px;
+            transition: all 0.3s ease;
         }
-
-        /* Web3 Specific Styles */
-        .web3-btn {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-            color: white !important;
-            border: none;
+        .soft-input {
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            outline: none;
+            transition: all 0.2s;
         }
-        .wallet-info {
-            font-size: 0.7rem;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 12px;
-            border-radius: 99px;
-            margin-top: 5px;
-            display: none;
+        .soft-input:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
         }
-
-        .welfare-card { background: rgba(255, 255, 255, 0.95); border-radius: 2rem; padding: 1.5rem; color: black; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 2px solid transparent; transition: all 0.3s; position: relative; }
-        .item-box { background: #f8f9fa; border: 2px dashed #ff99cc; border-radius: 1rem; padding: 0.5rem; text-align: center; position: relative; transition: all 0.3s; }
-        .item-pending { opacity: 0.5; filter: grayscale(1); border-color: #cbd5e1; }
-        .status-badge { position: absolute; top: -5px; right: -5px; font-size: 9px; padding: 2px 6px; border-radius: 99px; font-weight: bold; color: white; z-index: 10; }
+        /* กล่องแสดงคำประกาศสไตล์ Console ในเกม */
+        .gov-box {
+            background: #1e293b;
+            color: #38bdf8;
+            font-family: monospace;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            transition: all 0.2s;
+        }
+        .gov-box:hover {
+            border-color: #475569;
+            background: #0f172a;
+        }
+        .btn-copy {
+            transition: all 0.2s;
+        }
+        .btn-copy:active {
+            transform: scale(0.95);
+        }
+        .fade-in { 
+            animation: fadeIn 0.8s ease-in-out; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
     </style>
 </head>
-<body class="bg-animate min-h-screen text-white p-4 md:p-10">
+<body class="p-6 md:p-12 flex items-center justify-center">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="text-center mb-6">
-            <h1 class="text-5xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-pink-200 to-blue-200 uppercase">TIME TOWN EMS</h1>
-            <p class="text-xs tracking-[0.5em] text-cyan-300 opacity-80 mt-2 uppercase font-bold">Emergency Medical Services</p>
-            
-            <!-- Wallet Status Display -->
-            <div id="wallet-status" class="flex flex-col items-center mt-4">
-                <div id="wallet-addr" class="wallet-info font-mono text-cyan-300 border border-cyan-500/30">Not Connected</div>
-            </div>
-        </header>
-
-        <nav class="flex justify-center mb-10">
-            <div class="nav-container">
-                <button onclick="showPage('dir')" id="btn-dir" class="nav-btn">ทำเนียบหมอ</button>
-                <button onclick="showPage('rules')" id="btn-rules" class="nav-btn">กฎเมือง/หมอ</button>
-                <button onclick="showPage('apply')" id="btn-apply" class="nav-btn">รับสมัคร</button>
-                <button onclick="showPage('welfare')" id="btn-welfare" class="nav-btn">รับสวัสดิการ</button>
-                <button onclick="showPage('logs')" id="btn-logs" class="nav-btn">ประวัติเข้า-ออก</button>
-                <!-- Web3 Connect Button -->
-                <button onclick="connectWallet()" id="btn-connect" class="nav-btn web3-btn">CONNECT WALLET</button>
-            </div>
-        </nav>
-
-        <div id="dir-page" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 transition-all">
-            <script>
-                const doctors = [
-                    { name: "High StepDaraRak", rank: "[H-EMS]", pos: "ผู้อำนวยการแพทย์", color: "pink", icon:"H", imgUrl: " https://i.postimg.cc/zD20PqgN/hay.png" },
-                    { name: "Jaokha Dai", rank: "[H-EMS]", pos: "ผู้อำนวยการแพทย์", color: "pink", icon:"J", imgUrl: "https://i.postimg.cc/x19jRfj1/ce-akhshim.png" },
-                    { name: "Cookie Tangjairak", rank: "[H-EMS]", pos: "ผู้อำนวยการแพทย์", color: "pink", icon:"C", imgUrl: "https://i.postimg.cc/BnSWWnzf/k-him-x-k.png" },
-                    { name: "Taichi Wyrmblood", rank: "[S-EMS]", pos: "เลขาผู้อำนวยการ", color: "blue", icon:"T" },
-                    { name: "Sasha Blackwell", rank: "[EMS]", pos: "แพทย์ชำนาญการ", color: "cyan", icon:"S", imgUrl: "https://i.postimg.cc/43ygrxSP/sa-him.png" },
-                    { name: "MooYor Mandeville", rank: "[EMS]", pos: "แพทย์ชำนาญการ", color: "cyan", icon:"M", imgUrl: "https://i.postimg.cc/Hn0zTkCM/rujs-pv.png" },
-                    { name: "June July", rank: "[EMS]", pos: "หัวหน้าแพทย์", color: "green", icon:"J", imgUrl: "https://i.postimg.cc/0yddKpPJ/0-o.png", status: "vacation" },
-                    { name: "Akira Yamada", rank: "[EMS]", pos: "หัวหน้าแพทย์", color: "green", icon:"A" },
-                    { name: "Dxvil Kxp", rank: "[EMS]", pos: "แพทย์", color: "gray", icon:"D", imgUrl: "https://i.postimg.cc/zXyvnYhs/dew-l.png" },
-                    { name: "Medea Makiss", rank: "[EMS]", pos: "แพทย์", color: "gray", icon:"M", imgUrl: "https://i.postimg.cc/ZKmtpwjV/m-de-y.png" },
-                    { name: "pony Austin", rank: "[EMS]", pos: "แพทย์", color: "gray", icon:"P", status: "vacation" },
-                    { name: "Zenz Hightway", rank: "[EMS]", pos: "แพทย์", color: "gray", icon:"Z" },
-                    { name: "Kira Winslow", rank: "[EMS]", pos: "แพทย์", color: "gray", icon:"K", imgUrl: "https://i.postimg.cc/MTHvYWDV/kh-r-ahim.png" },
-                    { name: "Chiba JustGonnaCry", rank: "[EMS]", pos: "แพทย์", color: "gray", icon:"C", imgUrl: "https://i.postimg.cc/prbyWjNN/ch-ba.png" },
-                    { name: "SangWien NaUtthayan", rank: "[EMS]", pos: "นักเรียนแพทย์", color: "gray", icon:"S", imgUrl: "https://i.postimg.cc/vmHNXj6J/s-ngwe-yn.png" }  
-                ];
-
-               document.write(doctors.map(doc => `
-                    <div class="bg-white bg-opacity-90 p-4 rounded-[2.5rem] flex flex-col items-center shadow-lg border border-gray-200 text-center relative overflow-hidden h-full">
-                        <div class="relative w-full aspect-[3/4] mb-4 shrink-0 overflow-hidden rounded-[2rem]">
-                            ${doc.imgUrl ? 
-                                `<img src="${doc.imgUrl}" class="w-full h-full object-cover shadow-md border-4 border-white ${doc.status === 'vacation' ? 'grayscale-[0.5]' : ''}">` : 
-                                `<div class="w-full h-full bg-gradient-to-br from-${doc.color}-500 to-gray-800 flex items-center justify-center font-black text-6xl text-white shadow-inner border-4 border-white">${doc.icon}</div>`
-                            }
-                            
-                            ${doc.status === 'vacation' ? `
-                                <div class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                                    <span class="text-white text-4xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">พักงาน</span>
-                                </div>
-                            ` : ''}
-                        </div>
-
-
-                        <div class="text-black">
-                            <span class="text-xs font-black text-gray-700 uppercase tracking-widest">${doc.rank}</span>
-                            <h3 class="text-xl font-black leading-tight text-gray-950 mt-1 uppercase italic">${doc.name}</h3>
-                            <p class="text-sm text-gray-600 font-bold mt-1">${doc.pos}</p>
-                        </div>
-                    </div>
-                `).join(''));
-            </script>
+    <div class="max-w-4xl w-full fade-in">
+        <div class="mb-6">
+            <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition font-semibold bg-white/60 px-4 py-2 rounded-full shadow-sm hover:shadow">
+                ✨ กลับสู่หน้าหลัก Portal
+            </a>
         </div>
 
-      <div id="rules-page" class="hidden space-y-6">
-    <div class="glass p-8 rounded-[3rem] text-black bg-white bg-opacity-95 shadow-2xl">
-        <h2 class="text-3xl font-black mb-4 text-red-600 italic uppercase">📢 ประกาศจากโรงพยาบาล Time Town</h2>
+        <div class="soft-card p-8 md:p-12">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-semibold tracking-wide text-slate-800 mb-3">📢 ระบบประกาศไฟต์ตรง</h1>
+                <div class="w-16 h-[2px] bg-slate-300 mx-auto mb-3"></div>
+                <p class="text-xs text-slate-400 tracking-[0.2em] uppercase font-bold">Time Town Fight Management Systems</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">ฝ่ายที่ 1 (ตระกูล/แก๊ง)</label>
+                    <select id="sideA" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer">
+                        <option value="">-- เลือกรอบเมืองฝ่ายที่ 1 --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">ฝ่ายที่ 2 (ตระกูล/แก๊ง)</label>
+                    <select id="sideB" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer">
+                        <option value="">-- เลือกรอบเมืองฝ่ายที่ 2 --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">ระยะเวลาคูลดาวน์</label>
+                    <select id="cdTime" class="soft-input w-full p-3.5 text-sm bg-white font-semibold text-slate-700 shadow-sm cursor-pointer">
+                        <option value="5">5 นาที</option>
+                        <option value="10">10 นาที</option>
+                        <option value="15">15 นาที</option>
+                        <option value="20">20 นาที</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">เวลาเริ่มไฟต์ (คำนวณให้อัตโนมัติ/แก้ไขเองได้)</label>
+                    <input type="time" id="startTime" class="soft-input w-full p-[11px] text-sm text-slate-700 font-semibold shadow-sm">
+                </div>
+            </div>
+
+            <div class="space-y-8">
+                <div>
+                    <div class="flex justify-between items-center mb-2.5">
+                        <span class="text-xs font-bold text-pink-600 bg-pink-50 border border-pink-100 px-4 py-1.5 rounded-full shadow-sm">📍 ประกาศที่ 1: แพทย์กำลังเข้าพื้นที่</span>
+                        <button onclick="copyToClipboard('govText1', this)" class="btn-copy text-xs font-bold text-white bg-[#4a90e2] hover:bg-blue-600 px-5 py-2 rounded-xl shadow-md hover:shadow-lg">
+                            คัดลอกข้อความ 📋
+                        </button>
+                    </div>
+                    <div id="govText1" class="gov-box p-4 md:p-5 text-sm font-mono whitespace-pre-wrap break-all select-all shadow-inner">/gov ขณะนี้แพทย์กำลังเข้าพื้นที่สตอรี่ระหว่างตระกูล - VS - ขอความร่วมมือให้หยุดการกระทำทุกรูปแบบ ขอบคุณค่ะ/ครับ</div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2.5">
+                        <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-4 py-1.5 rounded-full shadow-sm">⏱️ ประกาศที่ 2: ตั้งคูลดาวน์ไฟต์ตรง</span>
+                        <button onclick="copyToClipboard('govText2', this)" class="btn-copy text-xs font-bold text-white bg-[#4a90e2] hover:bg-blue-600 px-5 py-2 rounded-xl shadow-md hover:shadow-lg">
+                            คัดลอกข้อความ 📋
+                        </button>
+                    </div>
+                    <div id="govText2" class="gov-box p-4 md:p-5 text-sm font-mono whitespace-pre-wrap break-all select-all shadow-inner">/gov ประกาศสตอรี่ระหว่างตระกูล - VS - คูลดาวน์ 5 นาที เริ่มเวลา --:-- น.</div>
+                </div>
+            </div>
+
+        </div>
         
-        <div class="p-6 bg-red-50 border-l-8 border-red-500 rounded-xl mb-6">
-            <p class="font-bold text-2xl text-red-700 mb-4 text-center"> </p>
-            <div class="space-y-4 border-t-2 border-red-200 pt-6">
-                <p class="text-xl font-bold text-gray-900 italic">* งดรับบุคลากรอาสาสมัครชั่วคราว</p>
-                <p class="text-xl font-bold text-gray-900 italic leading-relaxed">* ขออภัย เนื่องจากทรัพยากรภายในหน่วยงานยังไม่พร้อมให้บริการในขณะนี้</p>
-                <p class="text-xl font-black text-red-600 mt-6 leading-relaxed">** ขณะนี้กำลังดำเนินการปรับปรุงโครงสร้างหน่วยงาน ขออภัยในความไม่สะดวกมา ณ ที่นี้ **</p>
-            </div>
-        </div> <div class="grid md:grid-cols-2 gap-6 mt-8">
-            <a href="https://sites.google.com/view/timetownrules/" target="_blank" class="block p-6 bg-blue-600 rounded-2xl text-white hover:scale-105 transition-transform shadow-lg text-center">
-                <h3 class="text-xl font-black italic uppercase">📜 กฏประเทศ TimeTown</h3>
-            </a>
-            <a href="https://sites.google.com/view/rule-medical-time-town/" target="_blank" class="block p-6 bg-pink-600 rounded-2xl text-white hover:scale-105 transition-transform shadow-lg text-center">
-                <h3 class="text-xl font-black italic uppercase">⚕️ กฏหน่วยงานแพทย์</h3>
-            </a>
-        </div>
-    </div> </div>
-
-        <div id="apply-page" class="hidden grid md:grid-cols-2 gap-8">
-            <div class="glass p-8 rounded-[3rem]">
-                <h2 class="text-3xl font-black mb-6 text-yellow-400 italic underline uppercase">สวัสดิการ</h2>
-                <div class="space-y-1 text-sm font-semibold mb-8 text-black bg-white bg-opacity-70 p-5 rounded-2xl shadow-inner">
-                    <p>• รับ PAYCHECK ทุกๆ 1 ชั่วโมง</p>
-                    <p>• โบนัส Peak Time เช้า, บ่าย, เย็น, พีคทาม</p>
-                    <p>• โบนัสล่วงเวลา</p>
-                    <p>• โบนัสสตอรี่</p>
-                    <p>• โบนัสความขยัน</p>
-                    <p>• โบนัสรายอาทิตย์</p>
-                </div>
-
-                <h2 class="text-2xl font-black mb-4 text-pink-300 italic underline uppercase">คุณสมบัติ</h2>
-                <div class="space-y-1 text-sm font-semibold opacity-90 text-black bg-white bg-opacity-70 p-5 rounded-2xl shadow-inner">
-                    <p>• อายุ 16 ปีขึ้นไป</p>
-                    <p>• สามารถเข้าเวรขั้นต่ำ 3 ชม. ต่อวัน</p>
-                    <p>• สามารถทำงานร่วมกับผู้อื่นได้</p>
-                    <p>• อุปกรณ์สื่อสารใช้งานได้ดี</p>
-                    <p>• สอบถามเพิ่มเติมได้ที่หน้าโรงพยายาล</p>
-                </div>
-            </div>
-
-            <div class="glass p-8 rounded-[3rem] text-black bg-white bg-opacity-95 shadow-2xl">
-                <div class="flex justify-between items-center mb-4 uppercase">
-                    <div>
-                        <h2 class="text-2xl font-black text-gray-950 italic uppercase">Registration</h2>
-                        <p class="text-[14px] font-bold text-blue-600">ติดต่อ : high stepdararak</p>
-                    </div>
-                    <button id="copy-btn" onclick="fastCopy()" class="bg-blue-600 px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-lg text-white transition-all active:scale-95">Copy To Discord</button>
-                </div>
-                <textarea id="apply-text" spellcheck="false" class="w-full rounded-2xl p-6 text-sm h-64 focus:ring-4 focus:ring-blue-500 shadow-inner border border-gray-300 font-medium bg-white">ชื่อภายในเกมส์ : 
-อายุ OC : 
-อายุ IC : 
-มีประสบการณ์ในการทำงาน : 
-ช่วงเวลาในการทำงาน : 
-ภูมิหลังตัวละคร : </textarea>
-                <a href="https://forms.gle/85KCrvsUzrPAayff9" target="_blank" class="block w-full py-4 mt-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl text-center font-black text-white shadow-xl border-2 border-black">Submit Forms</a>
-            </div>
-        </div>
-
-        <div id="welfare-page" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Welfare Cards Original Content -->
-            <div class="welfare-card border-gray-200 opacity-80"> <div class="flex justify-between items-start mb-4">
-                <h3 class="font-black text-lg italic uppercase text-gray-500">Cookie Tangjairak</h3>
-                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-full font-bold">DECLINED</span>
-            </div>
-            <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                <span class="text-3xl mb-2">🚫</span>
-                <p class="text-xs font-black uppercase text-gray-400 tracking-widest">No Welfare Requested</p>
-            </div>
-            </div>
-            <div class="welfare-card border-gray-200 opacity-80"> <div class="flex justify-between items-start mb-4">
-                <h3 class="font-black text-lg italic uppercase text-gray-500">High StepDaraRak</h3>
-                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-full font-bold">DECLINED</span>
-            </div>
-            <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                <span class="text-3xl mb-2">🚫</span>
-                <p class="text-xs font-black uppercase text-gray-400 tracking-widest">No Welfare Requested</p>
-            </div>
-            </div>
-            <div class="welfare-card border-gray-200 opacity-80"> <div class="flex justify-between items-start mb-4">
-                <h3 class="font-black text-lg italic uppercase text-gray-500">Jaokha Dai</h3>
-                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-full font-bold">DECLINED</span>
-            </div>
-            <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                <span class="text-3xl mb-2">🚫</span>
-                <p class="text-xs font-black uppercase text-gray-400 tracking-widest">No Welfare Requested</p>
-            </div>
-            </div>
-            <div class="welfare-card border-gray-200 opacity-80"> <div class="flex justify-between items-start mb-4">
-                <h3 class="font-black text-lg italic uppercase text-gray-500">Sasha Blackwell</h3>
-                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-full font-bold">DECLINED</span>
-            </div>
-            <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                <span class="text-3xl mb-2">🚫</span>
-                <p class="text-xs font-black uppercase text-gray-400 tracking-widest">No Welfare Requested</p>
-            </div>
-            </div>
-            <div class="welfare-card border-gray-200 opacity-80"> <div class="flex justify-between items-start mb-4">
-                <h3 class="font-black text-lg italic uppercase text-gray-500">MooYor Mandeville</h3>
-                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-full font-bold">DECLINED</span>
-            </div>
-            <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
-                <span class="text-3xl mb-2">🚫</span>
-                <p class="text-xs font-black uppercase text-gray-400 tracking-widest">No Welfare Requested</p>
-            </div>
-            </div>
-            <div class="welfare-card border-blue-500"> <div class="flex justify-between items-start mb-4">
-                <h3 class="font-black text-lg italic uppercase text-gray-900">Kira Winslow</h3>
-                <span class="bg-green-100 text-green-600 text-[10px] px-2 py-1 rounded-full font-bold">COMPLETED</span> 
-            </div>
-
-            <div class="grid grid-cols-3 gap-2">
-                <div class="item-box border-green-400">
-                    <span class="status-badge bg-green-500">✓</span>
-                    <img src="https://i.postimg.cc/vmX2W78B/mi-phl.png" class="h-16 w-full object-contain mb-1">
-                    <p class="text-[10px] font-black uppercase">ไม้พลู</p>
-                </div>
-                <div class="item-box border-green-400">
-                    <span class="status-badge bg-green-500">✓</span>
-                    <img src="https://i.postimg.cc/bvHrLJW7/mi-phl-3.png" class="h-16 w-full object-contain mb-1">
-                    <p class="text-[10px] font-black uppercase">ไม้พลู +3</p>
-                </div>
-                <div class="item-box border-green-400">
-                    <span class="status-badge bg-green-500">✓</span>
-                    <img src="https://i.postimg.cc/3J4wV9zX/m-d.png" class="h-16 w-full object-contain mb-1">
-                    <p class="text-[10px] font-black uppercase">มีด</p>
-                </div>
-            </div> <p class="text-[10px] text-center mt-3 font-bold text-green-600 italic">✨ ตรวจสอบและมอบสวัสดิการครบถ้วนแล้ว</p>
-        </div> 
-        <!-- Additional welfare cards... -->
-        </div>
-            
-        <div id="logs-page" class="hidden glass rounded-[2.5rem] overflow-hidden text-black">
-            <div class="p-6 bg-white bg-opacity-10 font-black text-white italic uppercase text-xl text-center">EMS Staff Records</div>
-            <div class="bg-white bg-opacity-95 overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="text-[12px] uppercase bg-gray-100 font-black italic">
-                        <tr>
-                            <th class="p-5">Officer Name</th>
-                            <th class="p-5 text-center text-green-600">Joined</th>
-                            <th class="p-5 text-center text-red-600">Resigned</th>
-                            <th class="p-5 text-right font-black italic tracking-widest">Remark</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 font-bold text-sm">
-                        <!-- Table content original... -->
-                        <tr>
-                            <td class="p-5 text-gray-950">High StepDaraRak</td>
-                            <td class="p-5 text-center font-mono text-green-700">04/11/2025</td>
-                            <td class="p-5 text-center font-mono text-gray-400">ปัจจุบัน</td>
-                            <td class="p-5 text-right text-green-600 uppercase italic tracking-widest">ประจำการ</td>
-                        </tr>
-                        <!-- Rest of table rows... -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <div class="mt-12 text-center text-[10px] text-slate-500 tracking-[0.4em] uppercase font-semibold">Est. 2026 • Time Town Project System</div>
     </div>
 
-    <script>
-        window.onload = () => showPage('dir');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Web3 Logic
-        let provider, signer, address;
+        // Firebase Configuration (เชื่อมฐานข้อมูลเดียวกับเว็บหลักของคุณ)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDErmAM7dA7NJ19jPLGgqKEqLpFW2qwdN0",
+            authDomain: "emss-ebb6e.firebaseapp.com",
+            projectId: "emss-ebb6e",
+            databaseURL: "https://emss-ebb6e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            appId: "1:154198162358:web:f16c1ffd840ceaa8845f17"
+        };
 
-        async function connectWallet() {
-            if (window.ethereum) {
-                try {
-                    // ขอเชื่อมต่อ account
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    address = accounts[0];
-                    
-                    // อัปเดต UI
-                    const btn = document.getElementById('btn-connect');
-                    const addrDisplay = document.getElementById('wallet-addr');
-                    
-                    btn.innerText = "CONNECTED";
-                    btn.classList.replace('web3-btn', 'bg-green-500');
-                    
-                    addrDisplay.innerText = `WALLET: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-                    addrDisplay.style.display = 'block';
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-                    console.log("Connected to:", address);
-                } catch (error) {
-                    console.error("User denied connection", error);
-                    alert("กรุณายอมรับการเชื่อมต่อกระเป๋า");
-                }
-            } else {
-                alert("กรุณาติดตั้ง MetaMask หรือ Wallet Extension อื่นๆ");
+        const selectA = document.getElementById('sideA');
+        const selectB = document.getElementById('sideB');
+        const cdTimeSelect = document.getElementById('cdTime');
+        const startTimeInput = document.getElementById('startTime');
+
+        // ฟังก์ชันคำนวณเวลาเริ่มไฟต์อัตโนมัติ (เวลาปัจจุบันเครื่องคอมพิวเตอร์ + นาทีคูลดาวน์)
+        function autoCalculateStartTime() {
+            const cooldownMinutes = parseInt(cdTimeSelect.value) || 5;
+            const now = new Date();
+            
+            // ทำการบวกนาทีเพิ่มเข้าไปตามที่เลือกคูลดาวน์
+            now.setMinutes(now.getMinutes() + cooldownMinutes);
+            
+            const hr = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            
+            // แสดงผลลัพธ์ในช่องเวลา
+            startTimeInput.value = `${hr}:${min}`;
+        }
+
+        // สั่งให้คำนวณเวลาตั้งแต่เปิดหน้าจอคอมขึ้นมาครั้งแรก
+        autoCalculateStartTime();
+
+        // ฟังก์ชันดึงรายชื่อตระกูลจาก Firebase Path: gangs มาใส่ในช่องเลือกตัวเลือก
+        onValue(ref(db, 'gangs'), (snapshot) => {
+            const data = snapshot.val();
+            
+            selectA.innerHTML = '<option value="">-- เลือกรอบเมืองฝ่ายที่ 1 --</option>';
+            selectB.innerHTML = '<option value="">-- เลือกรอบเมืองฝ่ายที่ 2 --</option>';
+
+            if (data) {
+                // เรียงลำดับตัวอักษรภาษาไทย ก-ฮ เพื่อความง่ายต่อการค้นหาบนคอมพิวเตอร์
+                const sortedGangs = Object.keys(data).sort((a, b) => a.localeCompare(b, 'th', { sensitivity: 'base' }));
+
+                sortedGangs.forEach(key => {
+                    const gang = data[key];
+                    const typeEmoji = gang.type === 'fam' ? '🌸' : '🛡️';
+                    const optText = `${typeEmoji} ${gang.name}`;
+
+                    const optionA = document.createElement('option');
+                    optionA.value = gang.name;
+                    optionA.textContent = optText;
+                    selectA.appendChild(optionA);
+
+                    const optionB = document.createElement('option');
+                    optionB.value = gang.name;
+                    optionB.textContent = optText;
+                    selectB.appendChild(optionB);
+                });
             }
+        });
+
+        // ฟังก์ชันสำหรับอัปเดตชุดข้อความ /gov แบบ Realtime
+        function updateGovTexts() {
+            const sideAVal = selectA.value || ".......";
+            const sideBVal = selectB.value || ".......";
+            const cdVal = cdTimeSelect.value;
+            const timeVal = startTimeInput.value || "--:--";
+
+            document.getElementById('govText1').innerText = `/gov ขณะนี้แพทย์กำลังเข้าพื้นที่สตอรี่ระหว่างตระกูล ${sideAVal} VS ${sideBVal} ขอความร่วมมือให้หยุดการกระทำทุกรูปแบบ ขอบคุณค่ะ/ครับ`;
+            document.getElementById('govText2').innerText = `/gov ประกาศสตอรี่ระหว่างตระกูล ${sideAVal} VS ${sideBVal} คูลดาวน์ ${cdVal} นาที เริ่ม ${timeVal} น.`;
         }
 
-        // Original Navigation and Functions
-        function showPage(pageId) {
-            const pages = ['dir', 'rules', 'apply', 'welfare', 'logs'];
-            pages.forEach(p => {
-                const pg = document.getElementById(p + '-page');
-                const btn = document.getElementById('btn-' + p);
-                if (pg) pg.classList.add('hidden');
-                if (btn) btn.classList.remove('active');
-            });
-            document.getElementById(pageId + '-page').classList.remove('hidden');
-            document.getElementById('btn-' + pageId).classList.add('active');
-        }
+        // เมื่อแอดมินเปลี่ยนเวลาคูลดาวน์ ให้คำนวณบวกเวลาเริ่มไฟต์ใหม่ทันที
+        cdTimeSelect.addEventListener('change', () => {
+            autoCalculateStartTime();
+            updateGovTexts();
+        });
 
-        function fastCopy() {
-            const textarea = document.getElementById("apply-text");
-            const btn = document.getElementById("copy-btn");
-            textarea.select();
-            navigator.clipboard.writeText(textarea.value);
-            btn.innerText = "COPIED!";
-            btn.classList.replace('bg-blue-600', 'bg-green-600');
-            setTimeout(() => {
-                btn.innerText = "Copy To Discord";
-                btn.classList.replace('bg-green-600', 'bg-blue-600');
-            }, 1000);
-        }
+        // ผูก Event ติดตามการเปลี่ยนค่าต่าง ๆ บนหน้าจอเพื่ออัปเดตข้อความทันที
+        selectA.addEventListener('change', updateGovTexts);
+        selectB.addEventListener('change', updateGovTexts);
+        startTimeInput.addEventListener('input', updateGovTexts); // กรณีแอดมินใช้เมาส์หรือคีย์บอร์ดปรับเวลาเอง
 
-        const headers = ["ชื่อภายในเกมส์ :", "อายุ OC :", "อายุ IC :", "มีประสบการณ์ในการทำงาน :", "ช่วงเวลาในการทำงาน :", "ภูมิหลังตัวละคร :"];
-        document.getElementById("apply-text").onkeydown = function(e) {
-            const textarea = e.target;
-            const start = textarea.selectionStart;
-            headers.forEach(h => {
-                const idx = textarea.value.indexOf(h);
-                if (idx !== -1 && ((e.key === "Backspace" && start > idx && start <= idx + h.length) || (e.key === "Delete" && start >= idx && start < idx + h.length))) {
-                    e.preventDefault();
-                }
+        // ฟังก์ชันคลิกเดียวเพื่อคัดลอกข้อความลง Clipboard ของคอมพิวเตอร์
+        window.copyToClipboard = function(elementId, btn) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "คัดลอกแล้ว! ✓";
+                btn.style.background = "#2ecc71"; // เปลี่ยนปุ่มเป็นสีเขียวเมื่อคัดลอกสำเร็จ
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#4a90e2";
+                }, 1500);
+            }).catch(err => {
+                alert("เกิดข้อผิดพลาดในการคัดลอกอัตโนมัติ กรุณาครอบดำข้อความแล้วกด Ctrl+C แทน");
             });
         }
     </script>
