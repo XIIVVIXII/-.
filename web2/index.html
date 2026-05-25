@@ -281,22 +281,38 @@
     onValue(lockRef, (snap) => { closedDays = snap.val() || {}; checkLockStatus(); renderHistory(); });
     onValue(gangRef, (snap) => {
         const data = snap.val(); let fL = [], gL = [];
-        if(data) Object.values(data).forEach(i => { if(i && i.name) (i.type === "gang") ? gL.push(i.name) : fL.push(i.name); });
-        fL.sort((a,b)=>a.localeCompare(b,'th')); gL.sort((a,b)=>a.localeCompare(b,'th'));
-        gangs = ["ประชาชน", ...gL, ...fL]; window.sortedGangs = { families: fL, gangs: gL };
+        if(data) Object.values(data).forEach(i => { 
+            if(i && i.name) {
+                let itemObj = { name: i.name, thaiName: i.thaiName || '', type: i.type || 'fam' };
+                (i.type === "gang") ? gL.push(itemObj) : fL.push(itemObj); 
+            }
+        });
+        fL.sort((a,b)=>a.name.localeCompare(b.name,'th')); 
+        gL.sort((a,b)=>a.name.localeCompare(b.name,'th'));
+        window.rawGangsData = [{ name: "ประชาชน", thaiName: "", type: "citizen" }, ...gL, ...fL];
+        window.sortedGangs = { 
+            families: fL.map(x => x.name), 
+            gangs: gL.map(x => x.name) 
+        };
+        gangs = ["ประชาชน", ...gL.map(x => x.name), ...fL.map(x => x.name)];
     });
 
     window.showGangs = () => {
         const list = document.getElementById('gangDropdown'); list.innerHTML = ""; list.style.display = "block";
         let h = `<div class="dropdown-item" onclick="selectGang('ประชาชน')">ประชาชน</div>`;
-        if(window.sortedGangs.gangs.length > 0) { h += `<div style="background:#f0f7ff; color:#4a90e2; padding:10px; font-weight:900;">🛡️ GANG</div>`; window.sortedGangs.gangs.forEach(g => h += `<div class="dropdown-item" onclick="selectGang('${g}')">${g}</div>`); }
-        if(window.sortedGangs.families.length > 0) { h += `<div style="background:#fff0f3; color:#ff85a2; padding:10px; font-weight:900;">🌸 FAMILY</div>`; window.sortedGangs.families.forEach(g => h += `<div class="dropdown-item" onclick="selectGang('${g}')">${g}</div>`); }
+        const sourceData = window.rawGangsData || [];
+        const fGangs = sourceData.filter(x => x.type === "gang");
+        const fFams = sourceData.filter(x => x.type === "fam" || x.type === "family");
+        if(fGangs.length > 0) { h += `<div style="background:#f0f7ff; color:#4a90e2; padding:10px; font-weight:900;">🛡️ GANG</div>`; fGangs.forEach(g => h += `<div class="dropdown-item" onclick="selectGang('${g.name}')">${g.name}${g.thaiName ? ` — ${g.thaiName}` : ''}</div>`); }
+        if(fFams.length > 0) { h += `<div style="background:#fff0f3; color:#ff85a2; padding:10px; font-weight:900;">🌸 FAMILY</div>`; fFams.forEach(g => h += `<div class="dropdown-item" onclick="selectGang('${g.name}')">${g.name}${g.thaiName ? ` — ${g.thaiName}` : ''}</div>`); }
         list.innerHTML = h;
     };
     window.selectGang = (v) => { document.getElementById('buyer').value = v; document.getElementById('gangDropdown').style.display = "none"; updateLive(); };
     window.filterGangs = () => {
-        const v = document.getElementById('buyer').value.toLowerCase(), list = document.getElementById('gangDropdown'), f = gangs.filter(g => g.toLowerCase().includes(v));
-        if(f.length > 0) { list.style.display = "block"; list.innerHTML = f.map(g => `<div class="dropdown-item" onclick="selectGang('${g}')">${g}</div>`).join(''); } else list.style.display = "none";
+        const v = document.getElementById('buyer').value.toLowerCase(), list = document.getElementById('gangDropdown');
+        const sourceData = window.rawGangsData || [];
+        const f = sourceData.filter(g => g.name.toLowerCase().includes(v) || g.thaiName.toLowerCase().includes(v));
+        if(f.length > 0) { list.style.display = "block"; list.innerHTML = f.map(g => `<div class="dropdown-item" onclick="selectGang('${g.name}')">${g.name}${g.thaiName ? ` — ${g.thaiName}` : ''}</div>`).join(''); } else list.style.display = "none";
     };
     window.renderMarket = (mI) => {
         let fH = "", mH = "";
@@ -322,7 +338,6 @@
     };
     window.renderHistory = () => {
         const d = document.getElementById('histDate').value, isL = closedDays[d] === true; let h = "", c = 1;
-        // เช็คสิทธิ์ลบป้ายประกาศแบบ Real-time
         const iCanDelete = userData.canDelete || currentUser === SUPER_ADMIN;
 
         sales.filter(s => s.date === d).forEach(s => { 
@@ -342,7 +357,6 @@
         document.getElementById('btnSave').style.display = isL ? 'none' : 'block'; document.getElementById('lockMsg').style.display = isL ? 'block' : 'none';
         const aC = document.getElementById('adminLockControl'); 
         if(aC) { 
-            // เช็คสิทธิ์ปิดงาน: ต้องเป็น Super Admin หรือมี isAdmin
             if(currentUser === SUPER_ADMIN || userData.isAdmin) { 
                 aC.style.display = "block"; aC.innerHTML = `<button class="${isL?'btn-unlock':'btn-lock'}" onclick="toggleLock('${d}', ${!isL})">${isL?'🔓 เปิดงาน':'🔒 ปิดงาน'}</button>`; 
             } else aC.style.display = "none"; 
