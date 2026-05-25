@@ -189,7 +189,7 @@ optgroup[label*="FAMILY"], optgroup[label*="GANG"], optgroup[label*="โรง�
 optgroup[label*="BLACKLIST"], optgroup[label*="สตอรี่"] { color: #ff0000 !important; }
 
 /* รายการย่อย (Option) ให้เป็นสีดำปกติเสมอ */
-option { color: black !important; font-weight: normal; background: white; }
+option { color: black !important; font-weight: normal; background: white; padding: 4px 8px; }
 
 </style>
 </head>
@@ -223,12 +223,15 @@ option { color: black !important; font-weight: normal; background: white; }
 <option value="3">ครั้งที่ 3 (BLACKLIST)</option>
 </select>
 
-<label>เลือกข้อกฎ</label>
-<select id="ruleSelect">
-    <option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>
-    </select>
+<label>🔍 ค้นหาข้อกฎ (พิมพ์คำที่ต้องการค้นหา)</label>
+<input type="text" id="ruleSearchInput" placeholder="พิมพ์ค้นหาข้อกฎ เช่น ทำร้าย, ไม่, อาวุธ..." style="margin-bottom: 8px;">
 
-<button class="action" onclick="addRule()">เพิ่มข้อ</button>
+<label>เลือกข้อกฎ (กางออกเห็นทันที คลิกเลือกได้เลย)</label>
+<select id="ruleSelect" size="6" style="height: auto; min-height: 160px;">
+    <option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>
+</select>
+
+<button class="action" onclick="addRule()" style="margin-top: 5px;">เพิ่มข้อ</button>
 <div id="ruleList" class="log"></div>
 
 <label>เนื่องจาก</label>
@@ -360,6 +363,7 @@ function getAutoUser() {
 }
 
 let allGangsData = {};
+let cachedRules = []; // ใช้สำหรับเก็บข้อมูลกฎทั้งหมดเพื่อทำระบบค้นหาแบบ Real-time
 
 function renderGangSelects() {
     const gangSelects = [document.getElementById('gang'), document.getElementById('coolGang')];
@@ -399,6 +403,53 @@ function renderGangSelects() {
     });
 }
 
+// ฟังก์ชันสำหรับ Render เมนูข้อกฎ (ปรับปรุงใหม่สร้าง Optgroup ไดนามิกเพื่อให้รองรับการกรองคำค้นหา 100%)
+function displayRules(filterText = "") {
+    const select = document.getElementById('ruleSelect');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>';
+
+    // สร้างกล่องเก็บชั่วคราว
+    const optgroupData = {
+        basic: { label: "-- กฎพื้นฐานโรงพยาบาล --", options: [] },
+        blacklist: { label: "-- กฎ BLACKLIST --", options: [] },
+        story: { label: "-- ทำผิดกฎ Blacklist กรณีสตอรี่ --", options: [] }
+    };
+
+    cachedRules.forEach(r => {
+        const isSelected = r.selected !== false;
+        const category = r.category || 'basic';
+        
+        const targetCategory = (category === 'basic' || category === 'normal') ? 'basic' : category;
+        
+        // ข้อมูลข้อความตัวพิมพ์เล็กสำหรับตรวจจับคำค้นหา
+        const ruleString = `ข้อที่ ${r.no} ${r.detail} (${Number(r.fine).toLocaleString()})`.toLowerCase();
+
+        // ตรวจสอบความสอดคล้องกับข้อความที่ค้นหา
+        if (isSelected && (filterText === "" || ruleString.includes(filterText.toLowerCase()))) {
+            const opt = document.createElement('option');
+            opt.value = `${r.no}|${r.fine}|${r.detail}`;
+            opt.textContent = `ข้อที่ ${r.no} ${r.detail} (${Number(r.fine).toLocaleString()})`;
+            
+            if (optgroupData[targetCategory]) {
+                optgroupData[targetCategory].options.push(opt);
+            }
+        }
+    });
+    
+    // วาด optgroup ลงบนหน้าจอเฉพาะกลุ่มที่มีข้อมูลตรงกับตัวกรองเท่านั้น
+    ['basic', 'blacklist', 'story'].forEach(catKey => {
+        const groupInfo = optgroupData[catKey];
+        if (groupInfo && groupInfo.options.length > 0) {
+            const groupEl = document.createElement('optgroup');
+            groupEl.label = groupInfo.label;
+            groupInfo.options.forEach(opt => groupEl.appendChild(opt));
+            select.appendChild(groupEl);
+        }
+    });
+}
+
 // --- Sync Portal Data ---
 function syncPortalData() {
     onValue(gangListRef, (snapshot) => {
@@ -408,51 +459,24 @@ function syncPortalData() {
 
     onValue(ruleListRef, (snapshot) => {
         const rulesData = snapshot.val();
-        const select = document.getElementById('ruleSelect');
-        
-        if (select) select.innerHTML = '<option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>';
-
         if (rulesData) {
-            const sortedRules = Object.keys(rulesData).map(key => ({
+            cachedRules = Object.keys(rulesData).map(key => ({
                 key: key,
                 ...rulesData[key]
             })).sort((a, b) => customSort(String(a.no), String(b.no)));
 
-            const groups = {
-                basic: document.createElement('optgroup'),
-                blacklist: document.createElement('optgroup'),
-                story: document.createElement('optgroup')
-            };
-            groups.basic.label = "-- กฎพื้นฐานโรงพยาบาล --";
-            groups.blacklist.label = "-- กฎ BLACKLIST --";
-            groups.story.label = "-- ทำผิดกฎ Blacklist กรณีสตอรี่ --";
-
-            sortedRules.forEach(r => {
-                const isSelected = r.selected !== false;
-                const category = r.category || 'basic';
-
-                if (isSelected && select) {
-                    const opt = document.createElement('option');
-                    opt.value = `${r.no}|${r.fine}|${r.detail}`;
-                    opt.textContent = `ข้อที่ ${r.no} ${r.detail} (${Number(r.fine).toLocaleString()})`;
-                    
-                    if (category === 'basic' || category === 'normal') {
-                        groups.basic.appendChild(opt);
-                    } else if (groups[category]) {
-                        groups[category].appendChild(opt);
-                    }
-                }
-            });
-            
-            if(select) {
-                if(groups.basic.children.length > 0) select.appendChild(groups.basic);
-                if(groups.blacklist.children.length > 0) select.appendChild(groups.blacklist);
-                if(groups.story.children.length > 0) select.appendChild(groups.story);
-            }
+            // แสดงผลครั้งแรกแบบยังไม่ฟิลเตอร์
+            const searchInput = document.getElementById('ruleSearchInput');
+            displayRules(searchInput ? searchInput.value : "");
         }
     });
 }
 syncPortalData();
+
+// ผูก Event ติดตามพิมพ์ในช่องค้นหาเพื่อกรองข้อกฎทันที
+document.getElementById('ruleSearchInput').addEventListener('input', function(e) {
+    displayRules(e.target.value);
+});
 
 // --- 2. Global Variables & UI Functions ---
 let rules=[];
