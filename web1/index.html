@@ -61,6 +61,27 @@ h1 {
     box-shadow:0 6px 15px rgba(0,0,0,0.15);
 }
 
+/* ปรับปรุงโครงสร้าง Layout สำหรับหน้าจอคอมพิวเตอร์แบบฝั่งซ้าย-ขวา */
+.computer-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.layout-left {
+    flex: 1;
+}
+
+.layout-right {
+    width: 420px;
+    background: #fff5f8;
+    border: 1px solid #ffc2d3;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
 input,select{
     width:100%;
     padding:10px;
@@ -189,7 +210,7 @@ optgroup[label*="FAMILY"], optgroup[label*="GANG"], optgroup[label*="โรง�
 optgroup[label*="BLACKLIST"], optgroup[label*="สตอรี่"] { color: #ff0000 !important; }
 
 /* รายการย่อย (Option) ให้เป็นสีดำปกติเสมอ */
-option { color: black !important; font-weight: normal; background: white; padding: 4px 8px; }
+option { color: black !important; font-weight: normal; background: white; padding: 6px 10px; }
 
 </style>
 </head>
@@ -207,46 +228,54 @@ option { color: black !important; font-weight: normal; background: white; paddin
 </div>
 
 <div id="warnPage" class="page">
-<div class="box">
-
+<div class="box" style="max-width: 1080px;">
 <h2>📢 ประกาศตักเตือน</h2>
 
-<label>เลือกตระกูล</label>
-<select id="gang">
-    <option value="">-- โปรดเลือกตระกูล --</option>
-</select>
+<div class="computer-layout">
+    
+    <div class="layout-left">
+        <label>เลือกตระกูล</label>
+        <select id="gang">
+            <option value="">-- โปรดเลือกตระกูล --</option>
+        </select>
 
-<label>เตือนครั้งที่</label>
-<select id="warnLevel">
-<option value="1">ครั้งที่ 1</option>
-<option value="2">ครั้งที่ 2</option>
-<option value="3">ครั้งที่ 3 (BLACKLIST)</option>
-</select>
+        <label>เตือนครั้งที่</label>
+        <select id="warnLevel">
+        <option value="1">ครั้งที่ 1</option>
+        <option value="2">ครั้งที่ 2</option>
+        <option value="3">ครั้งที่ 3 (BLACKLIST)</option>
+        </select>
 
-<label>🔍 ค้นหาข้อกฎ (พิมพ์คำที่ต้องการค้นหา)</label>
-<input type="text" id="ruleSearchInput" placeholder="พิมพ์ค้นหาข้อกฎ เช่น ทำร้าย, ไม่, อาวุธ..." style="margin-bottom: 8px;">
+        <label>🔍 ค้นหาข้อกฎ (พิมพ์คำที่ต้องการค้นหา)</label>
+        <input type="text" id="ruleSearchInput" placeholder="พิมพ์ค้นหาข้อกฎ เช่น ทำร้าย, ไม่, อาวุธ..." style="margin-bottom: 14px;">
 
-<label>เลือกข้อกฎ (กางออกเห็นทันที คลิกเลือกได้เลย)</label>
-<select id="ruleSelect" size="6" style="height: auto; min-height: 160px;">
-    <option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>
-</select>
+        <label>เนื่องจาก</label>
+        <input id="reason">
 
-<button class="action" onclick="addRule()" style="margin-top: 5px;">เพิ่มข้อ</button>
-<div id="ruleList" class="log"></div>
+        <label>ค่าปรับ</label>
+        <input id="fine">
 
-<label>เนื่องจาก</label>
-<input id="reason">
+        <label>สถานะ</label>
+        <select id="status">
+        <option selected>ยังไม่ชำระ</option>
+        <option>ชำระแล้ว</option>
+        </select>
 
-<label>ค่าปรับ</label>
-<input id="fine">
+        <button class="action" onclick="warn()" style="width: 100%; margin-top: 5px; padding: 12px; font-size: 16px;">สร้างประกาศ</button>
+    </div>
 
-<label>สถานะ</label>
-<select id="status">
-<option selected>ยังไม่ชำระ</option>
-<option>ชำระแล้ว</option>
-</select>
+    <div class="layout-right">
+        <label style="font-weight: bold; margin-bottom: 5px; color: #ff6f9c;">📋 เลือกข้อกฎ (คลิกเลือกได้เลย):</label>
+        <select id="ruleSelect" size="14" style="height: 320px; margin-bottom: 8px; background: white;">
+            <option value="">-- โปรดเลือกข้อกฎจากระบบ --</option>
+        </select>
+        <button class="action" onclick="addRule()">เพิ่มข้อกฎที่เลือก</button>
+        <div id="ruleList" class="log" style="max-height: 120px; overflow-y: auto;"></div>
+    </div>
 
-<button class="action" onclick="warn()">สร้างประกาศ</button>
+</div>
+
+<hr style="border: 0; border-top: 1px dashed #ffc2d3; margin: 25px 0;">
 
 <h3>📢 FiveM</h3>
 <div id="warnFiveM" class="log"></div>
