@@ -234,10 +234,10 @@ option { color: black !important; font-weight: normal; background: white; paddin
 <div class="computer-layout">
     
     <div class="layout-left">
-        <label>เลือกตระกูล</label>
-        <select id="gang">
-            <option value="">-- โปรดเลือกตระกูล --</option>
-        </select>
+        <label>เลือกตระกูล หรือพิมพ์ชื่อเองได้</label>
+        <input type="text" id="gang" list="gangOptions" placeholder="-- เลือกตระกูล หรือพิมพ์ชื่อเองที่นี่ --" onfocus="this.value=''">
+        <datalist id="gangOptions">
+            </datalist>
 
         <label>เตือนครั้งที่</label>
         <select id="warnLevel">
@@ -293,10 +293,10 @@ option { color: black !important; font-weight: normal; background: white; paddin
 
 <h2>⏱ ประกาศคูลดาวน์</h2>
 
-<label>เลือกตระกูล</label>
-<select id="coolGang">
-    <option value="">-- โปรดเลือกตระกูล --</option>
-</select>
+<label>เลือกตระกูล หรือพิมพ์ชื่อเองได้</label>
+<input type="text" id="coolGang" list="coolGangOptions" placeholder="-- เลือกตระกูล หรือพิมพ์ชื่อเองที่นี่ --" onfocus="this.value=''">
+<datalist id="coolGangOptions">
+    </datalist>
 
 <button class="action" onclick="cooldown()">สร้างประกาศ</button>
 
@@ -395,41 +395,43 @@ let allGangsData = {};
 let cachedRules = []; // ใช้สำหรับเก็บข้อมูลกฎทั้งหมดเพื่อทำระบบค้นหาแบบ Real-time
 
 function renderGangSelects() {
-    const gangSelects = [document.getElementById('gang'), document.getElementById('coolGang')];
+    const gangOptions = document.getElementById('gangOptions');
+    const coolGangOptions = document.getElementById('coolGangOptions');
     
-    gangSelects.forEach(select => {
-        if(!select) return;
-        select.innerHTML = '<option value="">-- โปรดเลือกตระกูล --</option>';
+    const sortedGangs = Object.keys(allGangsData).map(key => ({
+        name: typeof allGangsData[key] === 'object' ? allGangsData[key].name : allGangsData[key],
+        thaiName: typeof allGangsData[key] === 'object' ? allGangsData[key].thaiName : '',
+        type: typeof allGangsData[key] === 'object' ? allGangsData[key].type : 'fam',
+        selected: typeof allGangsData[key] === 'object' ? (allGangsData[key].selected !== false) : true
+    })).sort((a, b) => customSort(a.name, b.name));
 
-        const sortedGangs = Object.keys(allGangsData).map(key => ({
-            name: typeof allGangsData[key] === 'object' ? allGangsData[key].name : allGangsData[key],
-            type: typeof allGangsData[key] === 'object' ? allGangsData[key].type : 'fam',
-            selected: typeof allGangsData[key] === 'object' ? (allGangsData[key].selected !== false) : true
-        })).sort((a, b) => customSort(a.name, b.name));
-
-        const groupFam = document.createElement('optgroup');
-        groupFam.label = "🌸 รายชื่อ FAMILY";
-        const groupGang = document.createElement('optgroup');
-        groupGang.label = "🛡️ รายชื่อ GANG";
-
+    // จัดการส่วนของหน้าตักเตือน (datalist)
+    if(gangOptions) {
+        gangOptions.innerHTML = '';
         sortedGangs.forEach(item => {
             if (item.selected) {
                 const opt = document.createElement('option');
                 opt.value = item.name;
-                opt.textContent = item.name;
-                opt.dataset.type = item.type;
-                
-                if (item.type === 'fam') {
-                    groupFam.appendChild(opt);
-                } else {
-                    groupGang.appendChild(opt);
-                }
+                opt.textContent = item.thaiName ? `${item.name} — ${item.thaiName}` : item.name;
+                opt.setAttribute('data-type', item.type);
+                gangOptions.appendChild(opt);
             }
         });
+    }
 
-        if(groupFam.children.length > 0) select.appendChild(groupFam);
-        if(groupGang.children.length > 0) select.appendChild(groupGang);
-    });
+    // จัดการส่วนของหน้าคูลดาวน์ (datalist)
+    if(coolGangOptions) {
+        coolGangOptions.innerHTML = '';
+        sortedGangs.forEach(item => {
+            if (item.selected) {
+                const opt = document.createElement('option');
+                opt.value = item.name;
+                opt.textContent = item.thaiName ? `${item.name} — ${item.thaiName}` : item.name;
+                opt.setAttribute('data-type', item.type);
+                coolGangOptions.appendChild(opt);
+            }
+        });
+    }
 }
 
 // ฟังก์ชันสำหรับ Render เมนูข้อกฎ (ปรับปรุงใหม่สร้าง Optgroup ไดนามิกเพื่อให้รองรับการกรองคำค้นหา 100%)
@@ -621,11 +623,19 @@ window.deleteLog = async function(key){
 // --- 4. Logic Functions (แก้ไขระบบ 1, 2 และ 3 Blacklist) ---
 
 window.warn = function(){
-    let select = document.getElementById("gang");
-    let gang = select.value;
-    let selectedOption = select.options[select.selectedIndex];
-    if(!gang) return alert("กรุณาเลือกตระกูล");
-    let type = selectedOption.dataset.type;
+    let input = document.getElementById("gang");
+    let gang = input.value.trim();
+    if(!gang) return alert("กรุณาเลือกหรือพิมพ์ชื่อตระกูล");
+    
+    // ค้นหาประเภทตระกูลจาก datalist options เผื่อเลือกจากประวัติ
+    let type = 'fam'; 
+    let options = document.querySelectorAll('#gangOptions option');
+    for(let opt of options) {
+        if(opt.value === gang) {
+            type = opt.getAttribute('data-type') || 'fam';
+            break;
+        }
+    }
 
     let reason=document.getElementById("reason").value;
     let fine=document.getElementById("fine").value;
@@ -634,7 +644,7 @@ window.warn = function(){
     let ruleText=getRuleText();
     let statusText = status=="ชำระแล้ว" ? "+สถานะ : ชำระแล้ว" : "-สถานะ : ยังไม่ชำระ";
 
-    let typeLabel = (type === 'fam') ? 'แก๊ง' : 'แก๊ง'; 
+    let typeLabel = 'แก๊ง'; 
 
     let fivem=`/gov ประกาศตักเตือน ${typeLabel} ${gang} เนื่องจาก ${reason} เตือนครั้งที่ ${level} รวม ตักเตือน ${level} ครั้ง ขอบคุณค่ะ/ครับ`;
     let discord=`📢 ประกาศตักเตือน\n${typeLabel} ${gang}\nเหตุผล : ${reason}\nเตือนครั้งที่ ${level}`;
@@ -654,18 +664,26 @@ window.warn = function(){
 }
 
 window.cooldown = function(){
-    let select = document.getElementById("coolGang");
-    let gang = select.value;
-    let selectedOption = select.options[select.selectedIndex];
-    if(!gang) return alert("กรุณาเลือกตระกูล");
-    let type = selectedOption.dataset.type;
+    let input = document.getElementById("coolGang");
+    let gang = input.value.trim();
+    if(!gang) return alert("กรุณาเลือกหรือพิมพ์ชื่อตระกูล");
+
+    // ค้นหาประเภทตระกูลจาก datalist เผื่อเลือกจากประวัติ
+    let type = 'fam';
+    let options = document.querySelectorAll('#coolGangOptions option');
+    for(let opt of options) {
+        if(opt.value === gang) {
+            type = opt.getAttribute('data-type') || 'fam';
+            break;
+        }
+    }
 
     let now=new Date();
     let end=new Date(now.getTime()+10*60000);
     let start=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
     let stop=end.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
     
-    let typeLabel = (type === 'fam') ? 'แก๊ง' : 'แก๊ง';
+    let typeLabel = 'แก๊ง';
     let text=`ประกาศ รบกวน ${typeLabel} ${gang} ออกจากพื้นที่โรงพยาบาลภายใน ระยะเวลา 10 นาที เริ่มตั้งแต่เวลา ${start} น. ถึง ${stop} น. ขอบคุณครับ/ค่ะ`;
     document.getElementById("coolFiveM").innerText="/gov "+text;
     document.getElementById("coolDiscord").innerText=`\`\`\`\n${text}\n\`\`\`\n<@&1335511632587128954> <@&1364843875105243206>`;
