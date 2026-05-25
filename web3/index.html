@@ -180,29 +180,33 @@
         // สั่งให้คำนวณเวลาตั้งแต่เปิดหน้าจอคอมขึ้นมาครั้งแรก
         autoCalculateStartTime();
 
-        // ฟังก์ชันดึงรายชื่อตระกูลจาก Firebase Path: gangs มาใส่ในช่องเลือกตัวเลือก
-        onValue(ref(db, 'gangs'), (snapshot) => {
+        // ฟังก์ชันดึงรายชื่อตระกูลจาก Firebase Path: gang_list มาใส่ในช่องเลือกตัวเลือก
+        onValue(ref(db, 'gang_list'), (snapshot) => {
             const data = snapshot.val();
             
             selectA.innerHTML = '<option value="">-- เลือกรอบเมืองฝ่ายที่ 1 --</option>';
             selectB.innerHTML = '<option value="">-- เลือกรอบเมืองฝ่ายที่ 2 --</option>';
 
             if (data) {
-                // เรียงลำดับตัวอักษรภาษาไทย ก-ฮ เพื่อความง่ายต่อการค้นหาบนคอมพิวเตอร์
-                const sortedGangs = Object.keys(data).sort((a, b) => a.localeCompare(b, 'th', { sensitivity: 'base' }));
+                // เรียงลำดับตัวอักษรภาษาไทย ก-ฮ ตามชื่อแก๊ง เพื่อความง่ายต่อการค้นหาบนคอมพิวเตอร์
+                const sortedGangs = Object.entries(data).sort((a, b) => {
+                    const nameA = a[1].name || a[1];
+                    const nameB = b[1].name || b[1];
+                    return nameA.localeCompare(nameB, 'th', { sensitivity: 'base' });
+                });
 
-                sortedGangs.forEach(key => {
-                    const gang = data[key];
-                    const typeEmoji = gang.type === 'fam' ? '🌸' : '🛡️';
-                    const optText = `${typeEmoji} ${gang.name}`;
+                sortedGangs.forEach(([key, value]) => {
+                    const gangName = value.name || value;
+                    const typeEmoji = value.type === 'fam' ? '🌸' : '🛡️';
+                    const optText = `${typeEmoji} ${gangName}`;
 
                     const optionA = document.createElement('option');
-                    optionA.value = gang.name;
+                    optionA.value = gangName;
                     optionA.textContent = optText;
                     selectA.appendChild(optionA);
 
                     const optionB = document.createElement('option');
-                    optionB.value = gang.name;
+                    optionB.value = gangName;
                     optionB.textContent = optText;
                     selectB.appendChild(optionB);
                 });
