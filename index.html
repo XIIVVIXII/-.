@@ -133,8 +133,9 @@
                                 <div id="typeGang" class="type-btn inactive" onclick="setGangType('gang')">🛡️ GANG</div>
                             </div>
                             <div class="flex gap-2">
-                                <input type="text" id="gangNameInput" class="rule-input w-full" placeholder="พิมพ์ชื่อตระกูลที่นี่...">
-                                <button onclick="addGang()" class="rule-btn whitespace-nowrap" id="addGangBtn" style="background:var(--primary)">เพิ่มตระกูล +</button>
+                               <input type="text" id="gangNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อตระกูลหลัก (เช่น BADPORYOUNG [214])">
+<input type="text" id="gangThaiNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อภาษาไทย (เช่น แบดโพยัง [214]) *ใส่หรือไม่ใส่ก็ได้*">
+<button onclick="addGang()" class="rule-btn whitespace-nowrap" id="addGangBtn" style="background:var(--primary)">เพิ่มตระกูล +</button>
                             </div>
                         </div>
                         <div id="gangListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
@@ -501,8 +502,13 @@
                     const isFam = v.type==='fam';
                     const div = document.createElement('div'); 
                     div.className = `flex justify-between items-center p-3 rounded-lg border ${isFam?'bg-blue-50 border-blue-100 text-blue-700':'bg-amber-50 border-amber-100 text-amber-700'}`;
+                    
+                    // แทรกส่วนเช็กชื่อภาษาไทยและการแสดงผลสไตล์ตามที่คุณต้องการตรงนี้ครับ
                     div.innerHTML = `
-                        <span class="text-xs font-bold uppercase">${name}</span>
+                        <div>
+                            <span class="text-xs font-bold uppercase">${name}</span>
+                            ${v.thaiName ? `<span class="text-xs font-normal opacity-70"> — ${v.thaiName}</span>` : ''}
+                        </div>
                         ${iCanDelete ? `<button onclick="deleteGang('${k}','${name}')" class="text-xs opacity-50 hover:opacity-100">✕</button>` : ''}
                     `;
                     display.appendChild(div);
@@ -510,11 +516,21 @@
             });
         }
 
-        window.addGang = async () => {
-            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
-            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
-            const i = document.getElementById('gangNameInput');
-            if(i.value) { push(ref(db, 'gang_list'), {name: i.value, type: selectedGangType}); i.value=""; }
+      window.addGang = async () => {
+            const name = document.getElementById('gangNameInput').value.trim();
+            const thaiName = document.getElementById('gangThaiNameInput').value.trim(); // ดึงค่าภาษาไทย
+            if(!name) return alert("กรุณากรอกชื่อตระกูลหลัก");
+
+            // แก้ไขจาก 'gangs' เป็น 'gang_list' เพื่อให้ตรงกับบอร์ดที่ระบบใช้ดึงข้อมูล (loadGangs)
+            const id = push(ref(db, 'gang_list')).key;
+            
+            // เปลี่ยนจาก currentGangType เป็น selectedGangType ให้ตรงกับปุ่มด้านบนที่ระบบใช้อยู่จริง
+            await set(ref(db, `gang_list/${id}`), { id, name, thaiName: thaiName || "", type: selectedGangType }); 
+            
+            // เคลียร์ค่าในช่องกรอกทั้งสองช่อง
+            document.getElementById('gangNameInput').value = '';
+            document.getElementById('gangThaiNameInput').value = '';
+            saveLog("ADD_GANG", `Added ${selectedGangType}: ${name}`);
         };
 
         window.deleteGang = async (k, n) => {
