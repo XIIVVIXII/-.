@@ -3,415 +3,805 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMS Command Copier & Management</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Time Town | Minimal Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; }
+        :root { --primary: #ff85a2; --secondary: #4a90e2; --edit-color: #2ecc71; --delete-color: #ff85a2; --market-color: #ffb347; --mine-color: #2ecc71; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Kanit', sans-serif; margin: 0; background: linear-gradient(135deg, #a0c7f3 0%, #a0c7f3 100%); background-attachment: fixed; padding: 15px; min-height: 100vh; overflow-y: auto; }
+        
+        .min-card { background: #ffffff; border: 1px solid #f0f0f0; transition: all 0.5s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .min-card:hover { border-color: #e2e8f0; box-shadow: 0 20px 40px rgba(36, 27, 27, 0.03); transform: translateY(-5px); }
+        .soft-gradient { background: linear-gradient(to right, #000000, #807ef5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .fade-in { animation: fadeIn 1s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #authModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 32px; width: 100%; max-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,0.12); text-align: center; border: 1px solid rgba(255,255,255,0.8); }
+        .modal-input { width: 100%; border: 1px solid #f0f0f0; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; text-align: center; font-size: 14px; transition: 0.3s; background: #fafafa; }
+        .modal-input:focus { border-color: var(--secondary); background: white; }
+        .modal-btn { width: 100%; padding: 14px; border-radius: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        .modal-link { font-size: 11px; color: #94a3b8; cursor: pointer; transition: 0.3s; padding: 5px; display: inline-block; }
+        .modal-link:hover { color: var(--secondary); }
+
+        #adminSection { display: none; margin-top: 30px; position: relative; }
+        .shield-btn { position: absolute; top: -10px; right: 10px; cursor: pointer; font-size: 24px; transition: 0.3s; z-index: 50; }
+        .shield-btn:hover { transform: scale(1.2) rotate(10deg); }
+        
+        #adminTableWrapper { display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); margin-top: 20px; max-height: 85vh; overflow-y: auto; }
+        .admin-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; flex-wrap: wrap; position: sticky; top: 0; background: white; z-index: 10; }
+        .tab-btn { padding: 8px 15px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; background: #f8fafc; color: #64748b; }
+        .tab-btn.active { background: var(--secondary); color: white; box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3); }
+        .admin-content-section { display: none; animation: fadeIn 0.4s ease; }
+        .admin-content-section.active { display: block; }
+
+        thead th { padding: 15px 10px; font-size: 10px; letter-spacing: 1px; text-align: center; border: none; }
+        .th-name { background-color: #f8fafc; color: #64748b; border-radius: 12px 0 0 12px; }
+        .th-pin { background-color: #fffbeb; color: #d97706; }
+        .th-rank { background-color: #fdf2f8; color: #db2777; }
+        .th-edit { background-color: #f0fdf4; color: #16a34a; }
+        .th-delete { background-color: #fff1f2; color: #e11d48; }
+        .th-action { background-color: #f1f5f9; color: #475569; border-radius: 0 12px 12px 0; }
+
+        .user-name { font-weight: bold; transition: 0.3s; }
+        .status-none { color: #999; }
+        .status-edit { color: var(--edit-color); }
+        .status-delete { color: var(--delete-color); }
+        .status-both { background: linear-gradient(to right, var(--edit-color), var(--delete-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--secondary); cursor: pointer; }
+
+        .top-bar { position: fixed; top: 20px; right: 20px; display: flex; gap: 8px; z-index: 100; }
+        .auth-btn { font-size: 10px; padding: 8px 16px; border-radius: 20px; cursor: pointer; letter-spacing: 1px; font-weight: 600; transition: 0.3s; border: 1px solid transparent; }
+        .login-btn { background: #4a90e2; color: white; }
+        .logout-btn { background: rgba(0,0,0,0.1); color: white; }
+        .logout-btn:hover { background: rgba(255,0,0,0.3); }
+
+        .gang-box { margin-top: 10px; }
+        .rule-input { border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px 15px; font-size: 13px; outline: none; transition: 0.2s; color: #334155; font-weight: 500; }
+        .rule-input:focus { border-color: var(--secondary); }
+        .rule-btn { background: #4a90e2; color: white; padding: 8px 20px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        
+        .rule-item { background: #fff; padding: 12px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; border: 2px solid #f1f5f9; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: 0.2s; }
+        .rule-item:hover { border-color: #cbd5e1; transform: translateX(5px); }
+        
+        .gang-item { background: white; padding: 8px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 13px; font-weight: 600; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .item-fam { border-left: 4px solid var(--primary) !important; background: #fff5f8; }
+        .item-gang { border-left: 4px solid var(--secondary) !important; background: #f8fafc; }
+
+        .type-btn { padding: 8px 12px; border-radius: 10px; font-size: 11px; cursor: pointer; font-weight: bold; border: 2px solid transparent; transition: 0.2s; }
+        .type-btn.active-fam { background: #fff5f8; color: var(--primary); border-color: var(--primary); }
+        .type-btn.active-gang { background: #f0f7ff; color: var(--secondary); border-color: var(--secondary); }
+        .type-btn.inactive { background: #f1f5f9; color: #94a3b8; }
+        
+        .price-card { background: #fff; border: 2px solid #f1f5f9; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+        .price-label { font-size: 10px; color: #64748b; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; }
+
+        .editable-value { cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; font-weight: 800; color: #1e293b; }
+        .editable-value:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .edit-input { width: 100%; text-align: center; border: 2px solid var(--secondary); border-radius: 6px; font-size: 13px; outline: none; background: white; color: black; font-weight: bold; }
+        
+        .category-header { background: #334155; color: #ffffff; padding: 10px 15px; border-radius: 12px; font-size: 12px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; margin-bottom: 12px; border-left: 6px solid var(--secondary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        .card-farm { border: 2px solid var(--market-color) !important; }
+        .card-mine { border: 2px solid var(--mine-color) !important; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+<body class="flex items-center justify-center p-6">
 
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-slate-800 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-heart-pulse text-rose-500 animate-pulse"></i> 
-                ระบบจัดการคำสั่งหน่วยงานแพทย์
-            </h1>
-            <p class="text-slate-500 mt-2 text-sm md:text-base">ระบบรวมคำสั่งใช้งานในเมือง สำหรับคอมพิวเตอร์</p>
-        </div>
-
-        <div class="flex justify-center gap-4 mb-8">
-            <button onclick="switchPage('copier-page')" id="tab-copier-page" class="px-6 py-2.5 rounded-xl font-medium transition-all duration-200 cursor-pointer shadow-xs bg-rose-500 text-white">
-                <i class="fa-solid fa-copy mr-2"></i> หน้าใช้งาน (คัดลอกคำสั่ง)
-            </button>
-            <button onclick="switchPage('manage-page')" id="tab-manage-page" class="px-6 py-2.5 rounded-xl font-medium transition-all duration-200 cursor-pointer shadow-xs bg-white text-slate-600 hover:bg-slate-100">
-                <i class="fa-solid fa-gear mr-2"></i> หน้าจัดการระบบ (เพิ่ม/ลบ)
-            </button>
-        </div>
-
-        <div id="toast" class="fixed top-5 right-5 bg-emerald-500 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transform translate-y-[-150%] transition-transform duration-300 z-50">
-            <i class="fa-solid fa-circle-check"></i>
-            <span id="toast-text">คัดลอกคำสั่งเรียบร้อยแล้ว!</span>
-        </div>
-
-        <div id="copier-page" class="space-y-4">
+    <div id="authModal">
+        <div class="modal-box fade-in">
+            <h3 id="modalTitle" class="text-[11px] font-bold tracking-[0.3em] uppercase text-slate-400 mb-8">LOGIN</h3>
+            <div id="inputContainer"></div>
+            <button id="modalPrimaryBtn" class="modal-btn bg-[#4a90e2] text-white shadow-lg shadow-blue-200">ถัดไป</button>
+            <div class="mt-6 flex flex-col gap-1">
+                <div id="modalLinks" class="flex justify-center gap-4"></div>
+                <span onclick="closeModal()" class="modal-link uppercase tracking-widest text-[9px] mt-2">ปิดหน้าต่าง</span>
             </div>
+        </div>
+    </div>
 
-        <div id="manage-page" class="hidden space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs md:col-span-1 h-fit">
-                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-folder-plus text-rose-500"></i> จัดการหมวดหมู่
-                    </h3>
-                    <form id="add-category-form" onsubmit="addCategory(event)" class="space-y-3 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อหมวดหมู่ใหม่</label>
-                            <input type="text" id="new-cat-name" placeholder="เช่น 💊 คลังผลิตยา" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-700 focus:outline-none focus:border-rose-500 transition-colors" required>
-                        </div>
-                        <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-2 rounded-xl transition-colors cursor-pointer shadow-xs text-sm">
-                            <i class="fa-solid fa-plus mr-1"></i> เพิ่มหมวดหมู่
-                        </button>
-                    </form>
-                    <hr class="border-slate-100 my-3">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">หมวดหมู่ที่มีอยู่ (กดลบได้)</label>
-                    <div id="manage-cats-list" class="space-y-1 max-h-48 overflow-y-auto pr-1">
-                        </div>
+    <div class="top-bar">
+        <div id="loginBtn" class="auth-btn login-btn" onclick="openAuth('login')">LOGIN</div>
+        <div id="logoutBtn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">LOGOUT</div>
+    </div>
+
+    <div class="max-w-5xl w-full fade-in relative">
+        <div id="adminSection">
+            <span class="shield-btn" onclick="toggleAdminTable()">🛡️</span>
+            <div id="adminTableWrapper" class="fade-in">
+                <h2 class="text-[11px] font-bold tracking-[0.3em] uppercase text-slate-400 mb-6 text-center">Management Panel</h2>
+                <div class="admin-tabs">
+                    <div class="tab-btn active" onclick="showTab('tab-users', this)">👥 สมาชิก</div>
+                    <div class="tab-btn" onclick="showTab('tab-gangs', this)">🏰 ตระกูล</div>
+                    <div class="tab-btn" onclick="showTab('tab-medicine', this)">💊 ราคายา</div>
+                    <div class="tab-btn" onclick="showTab('tab-market', this)">⛏️ รอบเมือง/เหมือง</div>
+                    <div class="tab-btn" onclick="showTab('tab-rules', this)">📜 กฎ</div>
                 </div>
-
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs md:col-span-2">
-                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-plus-circle text-emerald-500"></i> เพิ่มคำสั่งใหม่เข้าระบบ
-                    </h3>
-                    <form id="add-command-form" onsubmit="addCommand(event)" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-600 mb-1">เลือกหมวดหมู่คำสั่ง</label>
-                                <select id="cmd-category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-rose-500 transition-colors" required>
-                                    </select>
+                
+                <div id="tab-users" class="admin-content-section active"><div class="overflow-x-auto"><table><thead><tr><th class="th-name">NAME (Edit)</th><th class="th-pin">PIN (Edit)</th><th class="th-rank">ADMIN</th><th class="th-edit">EDIT</th><th class="th-delete">DELETE</th><th class="th-action">ACTION</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div>
+                
+                <div id="tab-gangs" class="admin-content-section">
+                    <div class="gang-box">
+                        <h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Gang Management</h3>
+                        <div class="flex flex-col gap-3 mb-4">
+                            <div class="flex gap-2">
+                                <div id="typeMc" class="type-btn active-mc" onclick="setGangType('mc')">🏍️ MC THE LOST</div>
+                                <div id="typeGang" class="type-btn inactive" onclick="setGangType('gang')">🛡️ GANG</div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-600 mb-1">หัวข้อ/ชื่อย่อของกล่อง</label>
-                                <input type="text" id="cmd-title" placeholder="เช่น รพ. เปิดทำการ" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-rose-500 transition-colors" required>
+                            <div class="flex gap-2">
+                               <input type="text" id="gangNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อตระกูลหลัก (เช่น MC THE LOST [214])">
+                               <input type="text" id="gangThaiNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อภาษาไทย (เช่น เดอะลอส [214]) *ใส่หรือไม่ใส่ก็ได้*">
+                               <button onclick="addGang()" class="rule-btn whitespace-nowrap" id="addGangBtn" style="background:var(--primary)">เพิ่มตระกูล +</button>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">คำสั่งหรือข้อความเต็ม (ที่จะใช้คัดลอกลงเมือง)</label>
-                            <input type="text" id="cmd-text" placeholder="เช่น /gov โรงพยาบาลเปิดให้บริการตามปกติแล้วครับ/ค่ะ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-rose-500 transition-colors" required>
-                        </div>
-                        <div class="text-right">
-                            <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl transition-colors cursor-pointer shadow-xs">
-                                <i class="fa-solid fa-save mr-1"></i> บันทึกข้อมูล
-                            </button>
-                        </div>
-                    </form>
+                        <div id="gangListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-trash-can text-rose-500"></i> รายการคำสั่งทั้งหมดในระบบ (คลิกปุ่มถังขยะเพื่อลบ)
-                </h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 text-sm font-medium">
-                                <th class="p-3">หมวดหมู่</th>
-                                <th class="p-3">หัวข้อ</th>
-                                <th class="p-3">ข้อความเต็ม</th>
-                                <th class="p-3 text-center">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="manage-table-body" class="text-slate-700 text-sm">
-                        </tbody>
-                    </table>
+                <div id="tab-medicine" class="admin-content-section">
+                    <div class="gang-box">
+                        <h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Medicine & Service Prices</h3>
+                        <div class="bg-slate-50 p-4 rounded-2xl mb-6 border-2 border-slate-100">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                <select id="medType" class="rule-input">
+                                    <option value="เพน">💉 เพน</option>
+                                    <option value="ศัลยกรรม">✂️ ศัลยกรรม</option>
+                                    <option value="ยา">💊 ยา (ระบุชื่อด้านล่าง)</option>
+                                </select>
+                                <input type="text" id="medName" class="rule-input" placeholder="ระบุชื่อยา (ถ้าเลือกหมวดยา)">
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 mb-2">
+                                <div><div class="price-label">ราคา: ประชาชน</div><input type="number" id="pCitizen" class="rule-input w-full" placeholder="ราคา"></div>
+                                <div><div class="price-label">ราคา: แก๊ง</div><input type="number" id="pGang" class="rule-input w-full" placeholder="ราคา"></div>
+                                <div><div class="price-label">ราคา: แฟม</div><input type="number" id="pFam" class="rule-input w-full" placeholder="ราคา"></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <div><div class="price-label">แพ็คละ: ประชาชน</div><input type="number" id="packCitizen" class="rule-input w-full" placeholder="จำนวน"></div>
+                                <div><div class="price-label">แพ็คละ: แก๊ง</div><input type="number" id="packGang" class="rule-input w-full" placeholder="จำนวน"></div>
+                                <div><div class="price-label">แพ็คละ: แฟม</div><input type="number" id="packFam" class="rule-input w-full" placeholder="จำนวน"></div>
+                            </div>
+                            <button onclick="saveMedicine()" class="rule-btn w-full">บันทึกรายการราคา +</button>
+                        </div>
+                        <div id="medicineListDisplay"></div>
+                    </div>
+                </div>
+
+                <div id="tab-market" class="admin-content-section">
+                    <div class="gang-box">
+                        <h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Market & Mining Management</h3>
+                        <div class="bg-slate-50 p-4 rounded-2xl mb-6 border-2 border-slate-100">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                <input type="text" id="marketItemName" class="rule-input" placeholder="ชื่อสินค้า (เช่น กล้วย, แร่เหล็ก)">
+                                <select id="marketCategory" class="rule-input">
+                                    <option value="farm">🌱 รอบเมือง (ฟาร์ม)</option>
+                                    <option value="mine">⛏️ เหมือง</option>
+                                    <option value="special">✨ อื่นๆ</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div><div class="price-label">ราคาเรท (ต่อชิ้น)</div><input type="number" id="marketRate" class="rule-input w-full" placeholder="ราคาขาย"></div>
+                                <div><div class="price-label">แพ็คละ (จำนวน)</div><input type="number" id="marketPack" class="rule-input w-full" placeholder="เช่น 40"></div>
+                            </div>
+                            <button onclick="saveMarketItem()" class="rule-btn w-full" style="background:var(--secondary)">เพิ่มสินค้า/เหมือง +</button>
+                        </div>
+                        <div id="marketListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    </div>
+                </div>
+                
+                <div id="tab-rules" class="admin-content-section">
+                    <div class="gang-box">
+                        <h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Rule Management (Update to Web 1)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-6 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200">
+                            <input type="number" id="ruleNo" class="rule-input" placeholder="เลขข้อ">
+                            <input type="text" id="ruleDetail" class="rule-input md:col-span-2" placeholder="รายละเอียดกฎ...">
+                            <input type="number" id="ruleFine" class="rule-input" placeholder="ค่าปรับ">
+                            <select id="ruleCategory" class="rule-input">
+                                <option value="basic">⚖️ กฎพื้นฐาน</option>
+                                <option value="blacklist">🚫 Blacklist</option>
+                                <option value="story">🔥 กฎสตอรี่</option>
+                            </select>
+                            <button onclick="addRule()" class="rule-btn md:col-span-4 shadow-md bg-slate-800 hover:bg-black transition-all">เพิ่มข้อกฎหมาย +</button>
+                        </div>
+                        <div id="ruleListDisplay" class="flex flex-col gap-1 max-h-[500px] overflow-y-auto pr-2"></div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <p class="text-center text-xs text-slate-400 mt-12">EMS Command Copier & Management Dashboard • พัฒนาขึ้นเพื่อความรวดเร็วในการโรลเพลย์</p>
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-extralight tracking-[0.2em] uppercase soft-gradient mb-4">Time Town</h1>
+            <div class="w-12 h-[1px] bg-gray-300 mx-auto mb-4"></div>
+            <p id="welcomeMsg" class="text-[10px] text-slate-400 tracking-[0.8em] uppercase font-bold italic">Service Directory</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div onclick="checkAndGo('web1/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">📢</div><h2 class="text-lg font-normal mb-2 tracking-wide">ประกาศ</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">ประกาศคูลดาวน์ และ บันทึก</p></div>
+            <div onclick="checkAndGo('web2/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">💰</div><h2 class="text-lg font-normal mb-2 tracking-wide">รายรับ รพ.</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">รายรับ-จ่าย และ รวมยอด</p></div>
+            <div onclick="checkAndGo('web3/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">☁️</div><h2 class="text-lg font-normal mb-2 tracking-wide">ประกาศไฟต์ตรง</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed">ประกาศไฟตต์ และ คูลดาวน์หมอ</p></div>
+             <div onclick="checkAndGo('web4/index.html')" class="min-card p-12 rounded-2xl text-center"><div class="text-4xl mb-8 opacity-60">📑</div><h2 class="text-lg font-normal mb-2 tracking-wide">คำสั่งประกาศทั่วไป</h2><p class="text-stone-700 text-xs font-light mb-10 leading-relaxed"> คำสั่งปรพกาศเปิด-ปิด อื่นๆ</p></div>
+        </div>
+        <div class="mt-24 text-center text-[9px] text-gray-300 tracking-[0.4em] uppercase">Est. 2026 &bull; Time Town Project</div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get, set, child, update, remove, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // คอนฟิกูเรชันของ Firebase (แก้ไขข้อมูลของท่านเองที่นี่)
         const firebaseConfig = {
-            apiKey: "AIzaSyA1b2C3D4E5F6G7H8I9J0K1L2M3N4O5P",
-            authDomain: "ems-timetown.firebaseapp.com",
-            databaseURL: "https://ems-timetown-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "ems-timetown",
-            storageBucket: "ems-timetown.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0k"
+            apiKey: "AIzaSyDErmAM7dA7NJ19jPLGgqKEqLpFW2qwdN0",
+            authDomain: "emss-ebb6e.firebaseapp.com",
+            projectId: "emss-ebb6e",
+            databaseURL: "https://emss-ebb6e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            appId: "1:154198162358:web:f16c1ffd840ceaa8845f17"
         };
 
-        // เริ่มต้นการใช้งานแอปพลิเคชันและฐานข้อมูล
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        
+        const SUPER_ADMIN = "Jaokha";
+        let currentUser = localStorage.getItem('portalUser') || null; 
+        const thaiSort = (a, b) => a.localeCompare(b, 'th', { sensitivity: 'base' });
 
-        // ข้อมูลหมวดหมู่ตั้งต้น
-        const defaultCategories = [
-            { id: 'gov', name: '📢 ประกาศหน่วยงาน (/gov)' },
-            { id: 'warn', name: '⚠️ ประกาศตักเตือน / ระบบวินัย' }
-        ];
-
-        // ข้อมูลคำสั่งตั้งต้น
-        const defaultCommands = [
-            { id: 1, category: 'gov', title: 'รพ. เปิดทำการ', text: '/gov โรงพยาบาลเปิดให้บริการตามปกติแล้วครับ/ค่ะ สามารถติดต่อเข้ารับการรักษาได้เลย' },
-            { id: 2, category: 'gov', title: 'รพ. ปิดชั่วคราว', text: '/gov โรงพยาบาลปิดให้บริการชั่วคราวเนื่องจากระบบเมืองขัดข้อง ขออภัยในความไม่สะดวก' },
-            { id: 3, category: 'gov', title: 'ติดเคสไฟต์ใหญ่', text: '/gov ขณะนี้หมอติดเคสไฟต์/สตอรี่ใหญ่ อาจเกิดความล่าช้าในการเคลียร์เคส ขออภัยในความไม่สะดวกครับ/ค่ะ' },
-            { id: 4, category: 'gov', title: 'เปิดรับซื้อวัตถุดิบทำยา', text: '/gov โรงพยาบาลเปิดรับซื้อวัตถุดิบทำยาแล้วครับ/ค่ะ ประชาชนที่มีของสามารถนำมาขายได้ที่จุดรับของเลยครับ' },
-            { id: 5, category: 'gov', title: 'เปิดรับซื้อข้าว', text: '/gov หมอเปิดรับซื้อข้าว/อาหารจานด่วนจำนวนมาก ประชาชนท่านใดต้องการปล่อยของ เชิญที่ รพ. ได้เลยครับ' },
-            { id: 6, category: 'warn', title: 'ห้ามตีกันหน้าหมอ', text: '/gov ขอความร่วมมือประชาชนงดใช้ความรุนแรงในพื้นที่บริเวณหน้าโรงพยาบาลเด็ดขาด' },
-            { id: 7, category: 'warn', title: 'เตือนการอุ้ม/ทำร้ายหมอ', text: '/gov หากพบเห็นการทำร้ายหมอหรือขัดขวางการปฏิบัติหน้าที่ ทางหน่วยงานจะดำเนินคดีขั้นสูงสุด' }
-        ];
-
-        // กำหนดให้ตัวแปรเหล่านี้เป็น Global เพื่อเข้าถึงผ่านอินไลน์แอตทริบิวต์ HTML ได้
-        window.categories = [];
-        window.commands = [];
-        window.accordionStates = JSON.parse(localStorage.getItem('ems_accordion_states')) || {};
-
-        // ระบบติดตามและซิงค์ข้อมูลจาก Firebase Realtime Database แบบเรียลไทม์
-        onValue(ref(db, 'ems_data'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                window.categories = data.categories || [];
-                window.commands = data.commands || [];
-            } else {
-                // หากยังไม่มีข้อมูลในระบบหลัก ให้เขียนข้อมูลตั้งต้นลงไป
-                window.categories = defaultCategories;
-                window.commands = defaultCommands;
-                set(ref(db, 'ems_data'), {
-                    categories: window.categories,
-                    commands: window.commands
-                });
-            }
-            renderData();
-        });
-
-        // ฟังก์ชันอัปเดตข้อมูลขึ้นคลาวด์ Firebase
-        function updateFirebaseData() {
-            set(ref(db, 'ems_data'), {
-                categories: window.categories,
-                commands: window.commands
+        let userData = {}; 
+        if (currentUser) {
+            onValue(ref(db, `portal_users/${currentUser}`), (snap) => {
+                userData = snap.val() || {};
+                if (typeof checkLockStatus === "function") checkLockStatus();
+                if (typeof renderHistory === "function") renderHistory();
             });
         }
 
-        // ฟังก์ชันจิ้มเปิด-ปิดพับเก็บหมวดหมู่ (Accordion)
-        window.toggleAccordion = function(id) {
-            const accordionContent = document.getElementById(id);
-            const accordionIcon = document.getElementById(`${id}-icon`);
-            
-            if (accordionContent.classList.contains('hidden')) {
-                accordionContent.classList.remove('hidden');
-                accordionIcon.classList.add('rotate-180');
-                window.accordionStates[id] = true;
-            } else {
-                accordionContent.classList.add('hidden');
-                accordionIcon.classList.remove('rotate-180');
-                window.accordionStates[id] = false;
-            }
-            localStorage.setItem('ems_accordion_states', JSON.stringify(window.accordionStates));
+        async function saveLog(action, detail, location = "หน้าหลัก") {
+            push(ref(db, 'activity_logs'), {
+                user: currentUser || 'Unknown', 
+                action: action, 
+                detail: detail, 
+                location: location, 
+                timestamp: Date.now() 
+            });
         }
 
-        // ฟังก์ชันสลับหน้าเว็บ (Tabs)
-        window.switchPage = function(pageId) {
-            document.getElementById('copier-page').classList.add('hidden');
-            document.getElementById('manage-page').classList.add('hidden');
-            document.getElementById(pageId).classList.remove('hidden');
+        window.updateRank = async (targetName, isAdmin) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return alert("คุณไม่มีสิทธิ์จัดการยศ");
+            
+            await update(ref(db, `portal_users/${targetName}`), { isAdmin: isAdmin });
+            saveLog("RANK_UPDATE", `Changed ${targetName} admin status to ${isAdmin}`);
+        };
 
-            const tabs = ['copier-page', 'manage-page'];
-            tabs.forEach(id => {
-                const btn = document.getElementById(`tab-${id}`);
-                if (id === pageId) {
-                    btn.className = "px-6 py-2.5 rounded-xl font-medium transition-all duration-200 cursor-pointer shadow-xs bg-rose-500 text-white";
+        window.editUsername = async (oldName) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return; 
+
+            const newName = prompt(`เปลี่ยนชื่อสำหรับคุณ ${oldName} เป็น:`, oldName);
+            if (newName && newName.trim() !== "" && newName !== oldName) {
+                const snapshot = await get(child(ref(db), `portal_users/${newName.trim()}`));
+                if (snapshot.exists()) return alert("ชื่อนี้มีในระบบแล้ว");
+                const userSnap = await get(child(ref(db), `portal_users/${oldName}`));
+                const userData = userSnap.val();
+                userData.name = newName.trim();
+                await set(ref(db, `portal_users/${newName.trim()}`), userData);
+                await remove(ref(db, `portal_users/${oldName}`));
+                
+                if (currentUser === oldName) {
+                    currentUser = newName.trim();
+                    localStorage.setItem('portalUser', currentUser);
+                }
+
+                saveLog("ADMIN_EDIT_NAME", `${currentUser} changed ${oldName} to ${newName}`);
+                alert("เปลี่ยนชื่อสำเร็จ!");
+                location.reload();
+            }
+        };
+
+        window.editUserPin = async (name, oldPin) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return;
+
+            const newPin = prompt(`ตั้งรหัส PIN ใหม่สำหรับ ${name} (4 หลัก):`, oldPin);
+            if (newPin && newPin.length === 4) {
+                await update(ref(db, `portal_users/${name}`), { pin: newPin });
+                saveLog("ADMIN_EDIT_PIN", `${currentUser} changed PIN for ${name}`);
+                alert("เปลี่ยน PIN สำเร็จ!");
+            } else if (newPin) alert("PIN ต้องมี 4 หลัก");
+        };
+
+        async function renderUserTable(users) {
+            const tbody = document.getElementById('userTableBody');
+            if (!tbody || !users) return;
+            tbody.innerHTML = "";
+
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+
+            const iCanManage = (myData && myData.isAdmin) || currentUser === SUPER_ADMIN;
+            const iCanDelete = (myData && myData.canDelete) || currentUser === SUPER_ADMIN;
+
+            const sortedNames = Object.keys(users).sort(thaiSort);
+
+            sortedNames.forEach(name => {
+                const u = users[name];
+                const isJaokha = (name === SUPER_ADMIN); 
+                const isMe = (name === currentUser);    
+
+                const canEditThisName = isMe || currentUser === SUPER_ADMIN;
+                const nameClickAction = canEditThisName ? `onclick="editUsername('${name}')"` : "";
+                const nameStyle = canEditThisName ? "cursor-pointer underline decoration-dotted" : "cursor-default";
+
+                const canSeePin = isMe || currentUser === SUPER_ADMIN;
+                const pinDisplay = canSeePin ? u.pin : "****";
+                const pinClickAction = canSeePin ? `onclick="editUserPin('${name}', '${u.pin}')"` : "";
+                const pinStyle = canSeePin ? "cursor-pointer underline decoration-dotted text-amber-600 font-bold" : "text-slate-400";
+
+                let nClass = "user-name status-none";
+                if (u.canEdit && u.canDelete) nClass = "user-name status-both";
+                else if (u.canEdit) nClass = "user-name status-edit";
+                else if (u.canDelete) nClass = "user-name status-delete";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <span class="${nClass} ${nameStyle}" ${nameClickAction}>${name}</span>
+                    </td>
+                    <td>
+                        <span class="${pinStyle}" ${pinClickAction}>${pinDisplay}</span>
+                    </td>
+                    <td style="background: #fffdf5;">
+                        <input type="checkbox" ${u.isAdmin ? 'checked' : ''} 
+                               ${(!iCanManage || isJaokha) ? 'disabled' : ''} 
+                               onchange="updateRank('${name}', this.checked)">
+                    </td>
+                    <td style="background: #f9fff0;">
+                        <input type="checkbox" ${u.canEdit ? 'checked' : ''} 
+                               ${(!iCanManage || isJaokha) ? 'disabled' : ''} 
+                               onchange="updatePerm('${name}', 'canEdit', this.checked)">
+                    </td>
+                    <td style="background: #fff5f5;">
+                        <input type="checkbox" ${u.canDelete ? 'checked' : ''} 
+                               ${(!iCanManage || isJaokha) ? 'disabled' : ''} 
+                               onchange="updatePerm('${name}', 'canDelete', this.checked)">
+                    </td>
+                    <td>
+                        ${(iCanDelete && !isJaokha) ? 
+                            `<button onclick="deleteUser('${name}')" class="text-red-400 font-bold text-[10px]">DEL</button>` 
+                            : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.updatePerm = async (n, f, v) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const myData = snap.val() || {};
+            if (currentUser !== SUPER_ADMIN && !myData.isAdmin) return alert("คุณไม่มีสิทธิ์แก้ไขสิทธิ์");
+            
+            update(ref(db, `portal_users/${n}`), {[f]: v});
+            saveLog("PERMISSION", `Changed ${n} ${f} to ${v}`);
+        };
+        
+        window.deleteUser = async (n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (iCanDelete) {
+                if(confirm(`ลบ ${n}?`)) {
+                    saveLog("DELETE_USER", `Deleted user ${n}`);
+                    remove(ref(db, `portal_users/${n}`));
+                }
+            } else {
+                alert("คุณไม่มีสิทธิ์ลบข้อมูล");
+            }
+        };
+
+        window.openAuth = (mode, redirect = '') => {
+            const container = document.getElementById('inputContainer');
+            const links = document.getElementById('modalLinks');
+            const btn = document.getElementById('modalPrimaryBtn');
+            const title = document.getElementById('modalTitle');
+            document.getElementById('authModal').style.display = 'flex';
+            title.innerText = mode.toUpperCase();
+            container.innerHTML = `
+                <input type="text" id="authName" class="modal-input" placeholder="ใส่ชื่อ">
+                <input type="password" id="authPin" class="modal-input" placeholder="PIN 4 หลัก" maxlength="4">
+            `;
+            btn.innerText = mode === 'login' ? 'เข้าสู่ระบบ' : 'ลงทะเบียน';
+            btn.onclick = () => {
+                const n = document.getElementById('authName').value.trim();
+                const p = document.getElementById('authPin').value;
+                if(mode==='login') finishLogin(n, p, redirect); else finishRegister(n, p);
+            };
+            links.innerHTML = mode === 'login' ? 
+                `<span class="modal-link" onclick="openAuth('register')">สมัครสมาชิก</span>` : 
+                `<span class="modal-link" onclick="openAuth('login')">กลับไปล็อกอิน</span>`;
+        };
+
+        async function finishLogin(n, p, red) {
+            const snap = await get(child(ref(db), `portal_users/${n}`));
+            if(snap.exists() && snap.val().pin === p) {
+                localStorage.setItem('portalUser', n); 
+                currentUser = n; 
+                await saveLog("LOGIN", `User ${n} logged in`);
+                alert("เข้าสู่ระบบสำเร็จ!");
+                red ? location.href = red : location.reload();
+            } else {
+                alert("ชื่อหรือ PIN ไม่ถูกต้อง");
+            }
+        }
+
+        async function finishRegister(n, p) {
+            if(!n || p.length !== 4) return alert("กรอกข้อมูลให้ครบ");
+            const snap = await get(child(ref(db), `portal_users/${n}`));
+            if(snap.exists()) return alert("ชื่อนี้ถูกใช้แล้ว");
+            await set(ref(db, `portal_users/${n}`), { name: n, pin: p, canEdit: false, canDelete: false, isAdmin: false });
+            alert("ลงทะเบียนสำเร็จ รอ Admin อนุมัติ");
+            location.reload();
+        }
+
+        window.logout = () => { localStorage.clear(); location.reload(); };
+        window.closeModal = () => document.getElementById('authModal').style.display='none';
+        window.showTab = (id, b) => {
+            document.querySelectorAll('.admin-content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(b) b.classList.add('active');
+        };
+        window.toggleAdminTable = () => {
+            const w = document.getElementById('adminTableWrapper');
+            w.style.display = w.style.display === 'block' ? 'none' : 'block';
+        };
+        window.checkAndGo = (u) => currentUser ? location.href=u : openAuth('login', u);
+
+        if (currentUser) {
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            if(logoutBtn) logoutBtn.style.display = 'block';
+            if(loginBtn) loginBtn.style.display = 'none';
+            document.getElementById('welcomeMsg').innerText = `WELCOME: ${currentUser}`;
+            get(child(ref(db), `portal_users/${currentUser}`)).then(snap => {
+                const u = snap.val();
+                if (u && (u.isAdmin === true || currentUser === SUPER_ADMIN)) {
+                    document.getElementById('adminSection').style.display = 'block';
+                    onValue(ref(db, 'portal_users'), s => renderUserTable(s.val()));
+                    loadGangs(); loadRules(); loadMedicines(); loadMarketItems();
                 } else {
-                    btn.className = "px-6 py-2.5 rounded-xl font-medium transition-all duration-200 cursor-pointer shadow-xs bg-white text-slate-600 hover:bg-slate-100";
+                    document.getElementById('adminSection').style.display = 'none';
                 }
             });
-            
-            renderData();
         }
 
-        // ฟังก์ชันเพิ่มหมวดหมู่ใหม่
-        window.addCategory = function(event) {
-            event.preventDefault();
-            const nameInput = document.getElementById('new-cat-name');
-            const name = nameInput.value.trim();
-            const id = 'cat-' + Date.now(); // สร้าง id แบบไดนามิก
+        // --- ส่วนระบบจัดการตระกูลสไตล์ MC (เพิ่มและลบได้ตามปกติ) ---
 
-            window.categories.push({ id: id, name: name });
-            updateFirebaseData();
-            
-            nameInput.value = '';
-            showToast('เพิ่มหมวดหมู่ใหม่สำเร็จแล้ว!');
-        }
+        let selectedGangType = 'mc';
+        window.setGangType = (t) => {
+            selectedGangType = t;
+            document.getElementById('typeMc').className = t==='mc'?'type-btn active-mc':'type-btn inactive';
+            document.getElementById('typeGang').className = t==='gang'?'type-btn active-gang':'type-btn inactive';
+        };
 
-        // ฟังก์ชันลบหมวดหมู่
-        window.deleteCategory = function(id) {
-            const cat = window.categories.find(c => c.id === id);
-            if (confirm(`คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่ "${cat.name}"? คำสั่งทั้งหมดในหมวดหมู่นี้จะถูกย้ายออกหรือถูกลบด้วย`)) {
-                window.categories = window.categories.filter(c => c.id !== id);
-                window.commands = window.commands.filter(cmd => cmd.category !== id); // ลบคำสั่งที่อยู่ในหมวดหมู่นี้ออกด้วย
-                
-                updateFirebaseData();
-                showToast('ลบหมวดหมู่เรียบร้อยแล้ว!');
-            }
-        }
+        async function loadGangs() {
+            onValue(ref(db, 'gang_list'), async (snap) => {
+                const display = document.getElementById('gangListDisplay');
+                if(!display) return;
+                const userSnap = await get(child(ref(db), `portal_users/${currentUser}`));
+                const uData = userSnap.val() || {};
+                const iCanDelete = uData.canDelete || currentUser === SUPER_ADMIN;
 
-        // ฟังก์ชันแสดงผลข้อมูลทั้งหมดลงหน้าเว็บ
-        window.renderData = function() {
-            // 1. วาดหน้าใช้งาน (Copier Page) ตามหมวดหมู่ที่มี
-            const copierPage = document.getElementById('copier-page');
-            copierPage.innerHTML = '';
-
-            window.categories.forEach(cat => {
-                const isHidden = window.accordionStates[`${cat.id}-accordion`] === false ? 'hidden' : '';
-                const isRotated = isHidden ? '' : 'rotate-180';
-
-                let accordionHTML = `
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-                        <div onclick="toggleAccordion('${cat.id}-accordion')" class="bg-slate-100 p-4 flex justify-between items-center cursor-pointer hover:bg-slate-200 transition-colors select-none">
-                            <h2 class="text-xl font-semibold text-slate-700 border-l-4 border-rose-500 pl-3">${cat.name}</h2>
-                            <i id="${cat.id}-accordion-icon" class="fa-solid fa-chevron-down text-slate-500 transition-transform duration-200 transform ${isRotated}"></i>
+                display.innerHTML = ""; 
+                const gangs = snap.val();
+                if(gangs) Object.entries(gangs).sort((a,b)=>thaiSort(a[1].name||a[1], b[1].name||b[1])).forEach(([k,v])=>{
+                    const name = v.name || v; 
+                    const isMc = v.type==='mc';
+                    const div = document.createElement('div'); 
+                    div.className = `flex justify-between items-center p-3 rounded-lg border ${isMc?'bg-blue-50 border-blue-100 text-blue-700':'bg-amber-50 border-amber-100 text-amber-700'}`;
+                    
+                    div.innerHTML = `
+                        <div>
+                            <span class="text-xs font-bold uppercase">${name}</span>
+                            ${v.thaiName ? `<span class="text-xs font-normal opacity-70"> — ${v.thaiName}</span>` : ''}
                         </div>
-                        <div id="${cat.id}-accordion" class="p-4 transition-all duration-200 ${isHidden}">
-                            <div id="${cat.id}-list-view" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                </div>
-                        </div>
-                    </div>
-                `;
-                copierPage.innerHTML += accordionHTML;
+                        ${iCanDelete ? `<button onclick="deleteGang('${k}','${name}')" class="text-xs opacity-50 hover:opacity-100">✕</button>` : ''}
+                    `;
+                    display.appendChild(div);
+                });
             });
+        }
 
-            // ใส่กล่องคำสั่งลงไปในหมวดหมู่ที่ถูกต้อง
-            window.commands.forEach(cmd => {
-                const listView = document.getElementById(`${cmd.category}-list-view`);
-                if (listView) {
-                    // ตรวจสอบคำสำคัญในหัวข้อเพื่อกำหนดสีคลาสของ Tailwind CSS
-                    let titleColorClass = 'text-rose-500';
-                    if (cmd.title.includes('เปิด')) {
-                        titleColorClass = 'text-emerald-600';
-                    } else if (cmd.title.includes('ปิด')) {
-                        titleColorClass = 'text-rose-600';
-                    }
+        window.addGang = async () => {
+            const name = document.getElementById('gangNameInput').value.trim();
+            const thaiName = document.getElementById('gangThaiNameInput').value.trim(); 
+            if(!name) return alert("กรุณากรอกชื่อตระกูลหลัก");
 
-                    const cardHTML = `
-                        <div onclick="copyCommand(this, \`${cmd.text}\`)" class="group bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-rose-400 hover:shadow-md cursor-pointer transition-all duration-200 flex justify-between items-center">
-                            <div class="w-full pr-4">
-                                <span class="block text-xs font-semibold uppercase tracking-wider mb-1 group-data-[success=true]:text-emerald-600 ${titleColorClass}">${cmd.title}</span>
-                                <p class="text-slate-700 text-sm font-medium whitespace-normal break-words group-data-[success=true]:text-emerald-700">${cmd.text}</p>
+            const id = push(ref(db, 'gang_list')).key;
+            
+            await set(ref(db, `gang_list/${id}`), { id, name, thaiName: thaiName || "", type: selectedGangType }); 
+            
+            document.getElementById('gangNameInput').value = '';
+            document.getElementById('gangThaiNameInput').value = '';
+            saveLog("ADD_GANG", `Added ${selectedGangType}: ${name}`);
+        };
+
+        window.deleteGang = async (k, n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (!iCanDelete) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบ ${n}?`) && remove(ref(db, `gang_list/${k}`));
+        };
+
+
+      // ==========================================
+        // GANG MANAGEMENT SYSTEMS
+        // ==========================================
+        window.addGang = async () => {
+            const name = document.getElementById('gangNameInput').value.trim();
+            const thaiName = document.getElementById('gangThaiNameInput').value.trim(); 
+            if(!name) return alert("กรุณากรอกชื่อตระกูลหลัก");
+
+            const id = push(ref(db, 'gang_list')).key;
+            
+            await set(ref(db, `gang_list/${id}`), { id, name, thaiName: thaiName || "", type: selectedGangType }); 
+            
+            document.getElementById('gangNameInput').value = '';
+            document.getElementById('gangThaiNameInput').value = '';
+            saveLog("ADD_GANG", `Added ${selectedGangType}: ${name}`);
+        };
+
+        window.deleteGang = async (k, n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (!iCanDelete) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบ ${n}?`) && remove(ref(db, `gang_list/${k}`));
+        };
+
+        // ==========================================
+        // MEDICINE PRICE SYSTEMS
+        // ==========================================
+        async function loadMedicines() {
+            onValue(ref(db, 'service_prices'), async (snap) => {
+                const display = document.getElementById('medicineListDisplay');
+                if(!display) return;
+                const userSnap = await get(child(ref(db), `portal_users/${currentUser}`));
+                const iCanDelete = (userSnap.val()?.canDelete) || currentUser === SUPER_ADMIN;
+
+                display.innerHTML = ""; 
+                const meds = snap.val();
+                if(meds) Object.entries(meds).forEach(([k,v])=>{
+                    const div = document.createElement('div'); 
+                    div.className = "bg-white p-4 rounded-xl border mb-3";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold uppercase">${v.type}</span>
+                                <h4 class="text-sm font-bold mt-1">${v.name}</h4>
                             </div>
-                            <i class="fa-regular fa-copy text-slate-400 group-hover:text-rose-500 transition-colors shrink-0 group-data-[success=true]:text-emerald-600 group-data-[success=true]:fa-solid group-data-[success=true]:fa-check"></i>
+                            ${iCanDelete ? `<button onclick="deleteMedicine('${k}')" class="text-red-300 hover:text-red-500 text-xs">✕ ลบ</button>` : ''}
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="text-center p-2 bg-slate-50 rounded-lg">
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">ประชาชน</div>
+                                <div class="text-xs font-bold cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'citizen')">${v.prices?.citizen || 0}</div>
+                                <div class="text-[8px] text-slate-400 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'citizen')">${v.packs?.citizen || 0}</span></div>
+                            </div>
+                            <div class="text-center p-2 bg-blue-50 rounded-lg">
+                                <div class="text-[9px] font-bold text-blue-400 uppercase">แก๊ง</div>
+                                <div class="text-xs font-bold text-blue-600 cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'gang')">${v.prices?.gang || 0}</div>
+                                <div class="text-[8px] text-blue-300 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'gang')">${v.packs?.gang || 0}</span></div>
+                            </div>
+                            <div class="text-center p-2 bg-pink-50 rounded-lg">
+                                <div class="text-[9px] font-bold text-pink-400 uppercase">แฟม</div>
+                                <div class="text-xs font-bold text-pink-600 cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'fam')">${v.prices?.fam || 0}</div>
+                                <div class="text-[8px] text-pink-300 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'fam')">${v.packs?.fam || 0}</span></div>
+                            </div>
+                        </div>`;
+                    display.appendChild(div);
+                });
+            });
+        }
+
+        window.saveMedicine = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
+            const type = document.getElementById('medType').value;
+            const nameInput = document.getElementById('medName').value;
+            const citizen = document.getElementById('pCitizen').value || 0;
+            const gang = document.getElementById('pGang').value || 0;
+            const fam = document.getElementById('pFam').value || 0;
+            const packC = document.getElementById('packCitizen').value || 0;
+            const packG = document.getElementById('packGang').value || 0;
+            const packF = document.getElementById('packFam').value || 0;
+            let finalName = type === 'ยา' ? nameInput : type;
+            if(!finalName) return alert("กรุณาระบุชื่อยา");
+            
+            await set(ref(db, `service_prices/${finalName}`), { 
+                type, name: finalName, 
+                prices: { citizen: Number(citizen), gang: Number(gang), fam: Number(fam) },
+                packs: { citizen: Number(packC), gang: Number(packG), fam: Number(packF) }
+            });
+            
+            document.getElementById('medName').value = "";
+            document.getElementById('pCitizen').value = ""; document.getElementById('pGang').value = ""; document.getElementById('pFam').value = "";
+            document.getElementById('packCitizen').value = ""; document.getElementById('packGang').value = ""; document.getElementById('packFam').value = "";
+        };
+
+        window.deleteMedicine = async (k) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (!iCanDelete) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบรายการนี้?`) && remove(ref(db, `service_prices/${k}`));
+        };
+
+        // ==========================================
+        // MARKET ITEM SYSTEMS (FARM / MINE)
+        // ==========================================
+        async function loadMarketItems() {
+            onValue(ref(db, 'market_items'), async (snap) => {
+                const display = document.getElementById('marketListDisplay'); 
+                if(!display) return;
+                const userSnap = await get(child(ref(db), `portal_users/${currentUser}`));
+                const iCanDelete = (userSnap.val()?.canDelete) || currentUser === SUPER_ADMIN;
+
+                display.innerHTML = ""; 
+                const items = snap.val();
+                if(items) Object.entries(items).forEach(([k,v])=>{
+                    const div = document.createElement('div'); 
+                    div.className = `price-card fade-in ${v.category==='farm'?'card-farm':(v.category==='mine'?'card-mine':'')}`;
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div><div class="text-[9px] uppercase font-bold opacity-40">${v.category}</div><div class="font-bold text-sm">${v.name}</div></div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <div class="price-label">ราคาเรท</div>
+                                    <div class="editable-value text-lg cursor-pointer" onclick="startInlineEdit(this, 'market_items/${k}', 'rate')">${v.rate}</div>
+                                    <div class="text-[9px] text-slate-400 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'market_items/${k}', 'pack')">${v.pack || 0}</span></div>
+                                </div>
+                                ${iCanDelete ? `<button onclick="deleteMarketItem('${k}')" class="text-red-300 hover:text-red-500">✕</button>` : ''}
+                            </div>
                         </div>
                     `;
-                    listView.innerHTML += cardHTML;
-                }
-            });
-
-            // ตรวจเช็กว่าหมวดหมู่ไหนไม่มีคำสั่งอยู่เลย ให้แสดงข้อความว่างเปล่า
-            window.categories.forEach(cat => {
-                const listView = document.getElementById(`${cat.id}-list-view`);
-                if (listView && listView.innerHTML.trim() === '') {
-                    listView.innerHTML = `<p class="text-slate-400 text-sm p-2 col-span-2"><i class="fa-solid fa-folder-open mr-1"></i> ยังไม่มีข้อมูลคำสั่งในหมวดหมู่นี้ คุณสามารถเพิ่มคำสั่งใหม่ได้ที่หน้าจัดการระบบ</p>`;
-                }
-            });
-
-            // 2. อัปเดตตัวเลือก (Select Options) ในฟอร์มเพิ่มคำสั่ง
-            const cmdCategorySelect = document.getElementById('cmd-category');
-            cmdCategorySelect.innerHTML = '';
-            window.categories.forEach(cat => {
-                cmdCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-            });
-
-            // 3. วาดรายชื่อหมวดหมู่ในหน้าจัดการระบบด้านซ้าย
-            const manageCatsList = document.getElementById('manage-cats-list');
-            manageCatsList.innerHTML = '';
-            window.categories.forEach(cat => {
-                manageCatsList.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100 text-sm">
-                        <span class="text-slate-700 font-medium truncate">${cat.name}</span>
-                        <button onclick="deleteCategory('${cat.id}')" class="text-rose-400 hover:text-rose-600 p-1 cursor-pointer" title="ลบหมวดหมู่นี้">
-                            <i class="fa-solid fa-circle-minus"></i>
-                        </button>
-                    </div>
-                `;
-            });
-
-            // 4. วาดแถวข้อมูลในตารางจัดการคำสั่ง
-            const manageTableBody = document.getElementById('manage-table-body');
-            manageTableBody.innerHTML = '';
-            window.commands.forEach(cmd => {
-                const currentCat = window.categories.find(c => c.id === cmd.category);
-                const catName = currentCat ? currentCat.name : 'ไม่ระบุหมวดหมู่';
-                
-                const rowHTML = `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td class="p-3"><span class="px-2 py-1 rounded-md text-xs font-semibold bg-rose-100 text-rose-700 max-w-[120px] truncate block">${catName}</span></td>
-                        <td class="p-3 font-semibold text-slate-800">${cmd.title}</td>
-                        <td class="p-3 max-w-xs md:max-w-md whitespace-normal break-words">${cmd.text}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteCommand(${cmd.id})" class="text-rose-500 hover:text-rose-700 p-2 transition-colors cursor-pointer" title="ลบคำสั่งนี้">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                manageTableBody.innerHTML += rowHTML;
+                    display.appendChild(div);
+                });
             });
         }
 
-        // ฟังก์ชันคัดลอกคำสั่งลงคลิปบอร์ด และทำให้ปุ่มเปลี่ยนสีชั่วคราว
-        window.copyCommand = function(element, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('คัดลอกคำสั่งเรียบร้อยแล้ว!');
+        window.saveMarketItem = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
+            const name = document.getElementById('marketItemName').value;
+            const cat = document.getElementById('marketCategory').value;
+            const rate = document.getElementById('marketRate').value;
+            const pack = document.getElementById('marketPack').value;
+            if(!name || !rate) return alert("ระบุชื่อและราคา");
+            
+            await set(ref(db, `market_items/${name}`), { name, category: cat, rate: Number(rate), pack: Number(pack||0) });
+            document.getElementById('marketItemName').value = ""; document.getElementById('marketRate').value = ""; document.getElementById('marketPack').value = "";
+        };
 
-                element.setAttribute('data-success', 'true');
-                element.classList.remove('bg-white', 'border-slate-200');
-                element.classList.add('bg-emerald-50', 'border-emerald-400');
+        window.deleteMarketItem = async (k) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (!iCanDelete) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบ ${k}?`) && remove(ref(db, `market_items/${k}`));
+        };
 
-                const icon = element.querySelector('i');
-                icon.classList.remove('fa-regular', 'fa-copy');
-                icon.classList.add('fa-solid', 'fa-check');
+        // ==========================================
+        // INLINE EDIT CORE ENGINE
+        // ==========================================
+        window.startInlineEdit = async (element, dbPath, fieldPath) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับแก้ไขข้อมูล");
+            
+            const oldValue = element.innerText;
+            const originalElement = element.cloneNode(true);
+            const input = document.createElement('input');
+            input.type = 'number'; 
+            input.value = oldValue; 
+            input.className = 'edit-input w-20 text-center border rounded p-1 text-sm text-slate-800';
+            
+            element.replaceWith(input);
+            input.focus(); 
+            input.select();
+            
+            let isFinished = false;
+            const finishEdit = async () => {
+                if (isFinished) return; 
+                isFinished = true;
+                const newValue = Number(input.value);
+                if (!isNaN(newValue) && newValue !== Number(oldValue)) {
+                    await update(ref(db, dbPath), { [fieldPath]: newValue });
+                    saveLog("INLINE_EDIT", `Updated ${dbPath}/${fieldPath} to ${newValue}`);
+                    originalElement.innerText = newValue;
+                }
+                input.replaceWith(originalElement);
+            };
+            
+            input.onblur = finishEdit;
+            input.onkeydown = (e) => { 
+                if (e.key === 'Enter') finishEdit(); 
+                if (e.key === 'Escape') { isFinished = true; input.replaceWith(originalElement); } 
+            };
+        };
 
-                setTimeout(() => {
-                    element.removeAttribute('data-success');
-                    element.classList.remove('bg-emerald-50', 'border-emerald-400');
-                    element.classList.add('bg-white', 'border-slate-200');
-                    
-                    icon.classList.remove('fa-solid', 'fa-check');
-                    icon.classList.add('fa-regular', 'fa-copy');
-                }, 1500);
+        // ==========================================
+        // LAW & RULE SYSTEMS
+        // ==========================================
+        window.addRule = async () => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
+            
+            const no = document.getElementById('ruleNo').value;
+            const det = document.getElementById('ruleDetail').value;
+            const fine = document.getElementById('ruleFine').value;
+            const cat = document.getElementById('ruleCategory').value;
 
-            }).catch(err => console.error('Error copying text: ', err));
-        }
+            if(!no || !det) return alert("กรอกข้อมูลกฎให้ครบถ้วน");
 
-        // ฟังก์ชันเพิ่มคำสั่งใหม่
-        window.addCommand = function(event) {
-            event.preventDefault();
-
-            const category = document.getElementById('cmd-category').value;
-            const title = document.getElementById('cmd-title').value.trim();
-            const text = document.getElementById('cmd-text').value.trim();
-
-            const newCommand = {
-                id: Date.now(),
-                category: category,
-                title: title,
-                text: text
+            const ruleData = {
+                no: Number(no),
+                detail: det,
+                fine: Number(fine || 0),
+                category: cat,
+                selected: true
             };
 
-            window.commands.push(newCommand);
-            updateFirebaseData();
-            showToast('เพิ่มคำสั่งใหม่สำเร็จแล้ว!');
+            const newRuleRef = push(ref(db, 'rule_list'));
+            await set(newRuleRef, ruleData);
+            
+            document.getElementById('ruleNo').value = ""; 
+            document.getElementById('ruleDetail').value = ""; 
+            document.getElementById('ruleFine').value = "";
+            alert("บันทึกกฎข้อที่ " + no + " เรียบร้อยแล้ว!");
+        };
 
-            document.getElementById('cmd-title').value = '';
-            document.getElementById('cmd-text').value = '';
+        async function loadRules() {
+            onValue(ref(db, 'rule_list'), async (snap) => {
+                const display = document.getElementById('ruleListDisplay'); 
+                if(!display) return;
+                const userSnap = await get(child(ref(db), `portal_users/${currentUser}`));
+                const iCanDelete = (userSnap.val()?.canDelete) || currentUser === SUPER_ADMIN;
+
+                display.innerHTML = ""; 
+                const rules = snap.val();
+                
+                if(rules) {
+                    const sortedRules = Object.entries(rules).sort((a, b) => a[1].no - b[1].no);
+                    sortedRules.forEach(([key, r]) => {
+                        const div = document.createElement('div'); 
+                        div.className = "rule-item flex justify-between items-center p-3 border-b border-slate-100 hover:bg-slate-50";
+                        div.innerHTML = `
+                            <div>
+                                <span class="font-bold text-blue-500 mr-2">ข้อ ${r.no}</span> 
+                                <span class="text-slate-600">${r.detail}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-amber-600">${(r.fine || 0).toLocaleString()}</span>
+                                ${iCanDelete ? `<button onclick="deleteRule('${key}', ${r.no})" class="text-red-300 hover:text-red-500">✕</button>` : ''}
+                            </div>`;
+                        display.appendChild(div);
+                    });
+                }
+            });
         }
 
-        // ฟังก์ชันลบคำสั่งออก
-        window.deleteCommand = function(id) {
-            if (confirm('คุณแน่ใจหรือไม่ที่จะลบคำสั่งนี้ออกจากระบบ?')) {
-                window.commands = window.commands.filter(cmd => cmd.id !== id);
-                updateFirebaseData();
-                showToast('ลบคำสั่งออกจากระบบแล้ว!');
+        window.deleteRule = async (key, ruleNo) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (!iCanDelete) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            if(confirm(`ยืนยันการลบข้อกฎหมายข้อที่ ${ruleNo}?`)) {
+                await remove(ref(db, `rule_list/${key}`));
+                saveLog("DELETE_RULE", `Deleted rule number ${ruleNo}`);
             }
-        }
+        };
 
-        // ฟังก์ชันแสดง Toast แจ้งเตือนข้อความ
-        window.showToast = function(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-text').innerText = message;
-            toast.style.transform = 'translateY(0)';
-            setTimeout(() => {
-                toast.style.transform = 'translateY(-150%)';
-            }, 2000);
-        }
-    </script>
-</body>
-</html>
+</script>
