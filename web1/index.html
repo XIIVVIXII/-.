@@ -225,6 +225,7 @@ option { color: black !important; font-weight: normal; background: white; paddin
 <button onclick="showPage('coolPage')">ประกาศคูลดาวน์</button>
 <button onclick="showPage('casePage')">ไม่พบเคสสลบ</button>
 <button onclick="showPage('logPage')">บันทึกประกาศ</button>
+<button onclick="showPage('gangHistoryPage')">สถิติตักเตือนตระกูล</button>
 </div>
 
 <div id="warnPage" class="page">
@@ -339,6 +340,76 @@ option { color: black !important; font-weight: normal; background: white; paddin
 </div>
 </div>
 
+<div id="gangHistoryPage" class="page" style="display: none;">
+<div class="box" style="max-width: 900px;">
+<h2>📊 สถิติตักเตือนตระกูล / MC</h2>
+<div id="gangHistoryList"></div>
+</div>
+</div>
+
+<style>
+/* สไตล์สำหรับการพับ/กาง และการตกแต่งตระกูล */
+.accordion-btn {
+    background-color: #f1f1f1;
+    color: #333;
+    cursor: pointer;
+    padding: 15px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid #ddd;
+    outline: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.4s;
+    margin-top: 5px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.accordion-btn:hover, .accordion-btn.active {
+    background-color: #ffc2d3;
+    color: #fff;
+}
+.accordion-panel {
+    padding: 0 15px;
+    background-color: white;
+    display: none;
+    overflow: hidden;
+    border-left: 2px solid #ff6f9c;
+    border-right: 2px solid #ff6f9c;
+    border-bottom: 2px solid #ff6f9c;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    margin-bottom: 10px;
+}
+.history-subitem {
+    padding: 10px 0;
+    border-bottom: 1px dashed #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+.history-subitem:last-child {
+    border-bottom: none;
+}
+.badge-warn {
+    background-color: #ffc107;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+.badge-blacklist {
+    background-color: #dc3545;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+</style>
+
 <script type="module">
 // --- 1. Firebase Setup ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -357,6 +428,7 @@ const db = getDatabase(app);
 const logRef = ref(db, 'announcement_logs');
 const gangListRef = ref(db, 'gang_list');
 const ruleListRef = ref(db, 'rule_list');
+const gangHistoryRef = ref(db, 'gang_warn_history'); // Database เส้นใหม่สำหรับสถิติตระกูล
 
 const SUPER_ADMIN = "Jaokha";
 let currentUser = localStorage.getItem('portalUser') || null;
@@ -542,7 +614,15 @@ function updateRules(){
         <button onclick="removeRule(${i})" style="color:red; cursor:pointer;">ลบ</button>`;
         box.appendChild(div);
     });
-    document.getElementById("fine").value=totalFine.toLocaleString();
+
+    // ตรวจสอบเงื่อนไขการตั้งราคาถ้าเลือกครั้งที่ 3
+    let level=document.getElementById("warnLevel").value;
+    if(level==3){
+        document.getElementById("fine").value="2,000,000";
+    } else {
+        document.getElementById("fine").value=totalFine.toLocaleString();
+    }
+    
     updateReason();
 }
 
@@ -584,6 +664,43 @@ window.saveHistory = async function(text){
     });
 }
 
+// ฟังก์ชันบันทึกลงสถิติตักเตือนตระกูลโดยเฉพาะ
+window.saveGangHistory = async function(){
+    let input = document.getElementById("gang");
+    let gangName = input.value.trim();
+    if(!gangName) return;
+
+    let type = 'fam'; 
+    let options = document.querySelectorAll('#gangOptions option');
+    for(let opt of options) {
+        if(opt.value === gangName) {
+            type = opt.getAttribute('data-type') || 'fam';
+            break;
+        }
+    }
+    let isMC = type === 'mc' || gangName.toUpperCase().includes('MC');
+    let displayTitle = isMC ? `MC : ${gangName}` : `แก๊ง : ${gangName}`;
+
+    let reason = document.getElementById("reason").value;
+    let fine = document.getElementById("fine").value;
+    let level = document.getElementById("warnLevel").value;
+    let ruleText = getRuleText();
+    const user = getAutoUser();
+
+    push(gangHistoryRef, {
+        gangKey: gangName,            // ใช้ชื่อสำหรับจัดกลุ่ม
+        displayTitle: displayTitle,    // ข้อความหัวข้อตอนแสดงผล
+        level: level,
+        ruleText: ruleText,
+        reason: reason,
+        fine: fine,
+        user: user,
+        time: time(),
+        date: date(),
+        timestamp: Date.now()
+    });
+}
+
 onValue(logRef, (snapshot) => {
     const box = document.getElementById("history");
     box.innerHTML = "";
@@ -608,6 +725,128 @@ onValue(logRef, (snapshot) => {
         });
     }
 });
+
+// ดึงข้อมูลและจัดกลุ่มสำหรับหนังสถิติตักเตือนตระกูลแบบ Accordion พร้อมเส้นคั่นวันที่ชัดเจน
+onValue(gangHistoryRef, (snapshot) => {
+    const box = document.getElementById("gangHistoryList");
+    box.innerHTML = "";
+    const data = snapshot.val();
+    if(data){
+        const iCanDelete = userData.canDelete || currentUser === SUPER_ADMIN;
+        
+        // จัดกลุ่มข้อมูลตามชื่อตระกูล
+        let groups = {};
+        Object.keys(data).forEach(key => {
+            let item = data[key];
+            item.dbKey = key; // เก็บคีย์หลักไว้ใช้สำหรับลบ
+            if(!groups[item.gangKey]){
+                groups[item.gangKey] = {
+                    title: item.displayTitle,
+                    list: []
+                };
+            }
+            groups[item.gangKey].list.push(item);
+        });
+
+        // วาด UI Accordion
+        Object.keys(groups).sort(customSort).forEach(gangKey => {
+            let group = groups[gangKey];
+            
+            // เรียงลำดับประวัติข้างในตระกูลจากใหม่ไปเก่า
+            group.list.sort((a,b) => b.timestamp - a.timestamp);
+
+            let btn = document.createElement("button");
+            btn.className = "accordion-btn";
+            btn.innerHTML = `<span>📂 ${group.title}</span> <span>(โดนทั้งหมด ${group.list.length} ครั้ง) ▾</span>`;
+            
+            let panel = document.createElement("div");
+            panel.className = "accordion-panel";
+            panel.style.padding = "10px 15px";
+
+            let lastDate = ""; // ตัวแปรสำหรับจำวันที่ล่าสุดที่วนลูปเจอ
+
+            group.list.forEach(item => {
+                // ✨ ระบบตรวจจับวันใหม่ เพื่อสร้างเส้นคั่นวันที่
+                if (item.date !== lastDate) {
+                    lastDate = item.date;
+                    let dateDivider = document.createElement("div");
+                    dateDivider.style.cssText = `
+                        text-align: center;
+                        margin: 15px 0 10px 0;
+                        font-size: 13px;
+                        font-weight: bold;
+                        color: #ff6f9c;
+                        display: flex;
+                        align-items: center;
+                    `;
+                    dateDivider.innerHTML = `
+                        <div style="flex: 1; border-bottom: 1px solid #ffdbb5; margin-right: 10px;"></div>
+                        📅 วันที่ ${item.date}
+                        <div style="flex: 1; border-bottom: 1px solid #ffdbb5; margin-left: 10px;"></div>
+                    `;
+                    panel.appendChild(dateDivider);
+                }
+
+                let subItem = document.createElement("div");
+                subItem.className = "history-subitem";
+                subItem.style.cssText = "padding: 12px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: center; font-size: 14px;";
+                
+                let badge = item.level == 3 
+                    ? `<span class="badge-blacklist">BLACKLIST</span>` 
+                    : `<span class="badge-warn">เตือนครั้งที่ ${item.level}</span>`;
+
+                subItem.innerHTML = `
+                    <div>
+                        <div style="margin-bottom: 5px;">
+                            ${badge} 
+                            <strong style="margin-left: 5px;">ข้อกฎ:</strong> ${item.ruleText || 'ไม่มี'} | 
+                            <strong>เหตุผล:</strong> ${item.reason} | 
+                            <strong>ค่าปรับ:</strong> ${item.fine} TD
+                        </div>
+                        <small style="color:#777; display: block; margin-top: 3px;">🕒 เวลา ${item.time} น. — โดยผู้ลง: 👤 ${item.user}</small>
+                    </div>
+                    <div>
+                        ${iCanDelete ? `<button style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size: 13px;" onclick="deleteGangHistory('${item.dbKey}')">🗑 ลบ</button>` : ''}
+                    </div>
+                `;
+                panel.appendChild(subItem);
+            });
+
+            // แก้ไขปัญหาเส้นประแถวสุดท้ายเกินมา
+            const lastSubItem = panel.querySelectorAll('.history-subitem');
+            if(lastSubItem.length > 0) {
+                lastSubItem[lastSubItem.length - 1].style.borderBottom = "none";
+            }
+
+            // ผูกฟังก์ชันจิ้มเปิด-พับเก็บ
+            btn.onclick = function() {
+                this.classList.toggle("active");
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                    this.innerHTML = `<span>📂 ${group.title}</span> <span>(โดนทั้งหมด ${group.list.length} ครั้ง) ▾</span>`;
+                } else {
+                    panel.style.display = "block";
+                    this.innerHTML = `<span>📂 ${group.title}</span> <span>(โดนทั้งหมด ${group.list.length} ครั้ง) ▴</span>`;
+                }
+            };
+
+            box.appendChild(btn);
+            box.appendChild(panel);
+        });
+    } else {
+        box.innerHTML = "<p style='text-align:center; color:#888;'>ยังไม่มีประวัติตักเตือนตระกูลในระบบ</p>";
+    }
+});
+
+window.deleteGangHistory = async function(key){
+    if (userData.canDelete || currentUser === SUPER_ADMIN) {
+        if(confirm("ยืนยันการลบประวัติตักเตือนรายการนี้?")){
+            remove(ref(db, `gang_warn_history/${key}`));
+        }
+    } else {
+        alert("⚠️ คุณไม่มียศสำหรับลบข้อมูล");
+    }
+}
 
 window.deleteLog = async function(key){
     // ระบบเช็คสิทธิ์ซ้ำก่อนลบจริง
@@ -644,19 +883,33 @@ window.warn = function(){
     let ruleText=getRuleText();
     let statusText = status=="ชำระแล้ว" ? "+สถานะ : ชำระแล้ว" : "-สถานะ : ยังไม่ชำระ";
 
-    let typeLabel = 'แก๊ง'; 
+    // ตรวจสอบว่าเป็น MC หรือไม่
+    let isMC = type === 'mc' || gang.toUpperCase().includes('MC');
+    let typeLabel = isMC ? 'MC :' : 'แก๊ง'; 
 
-    let fivem=`/gov ประกาศตักเตือน ${typeLabel} ${gang} เนื่องจาก ${reason} เตือนครั้งที่ ${level} รวม ตักเตือน ${level} ครั้ง ขอบคุณค่ะ/ครับ`;
-    let discord=`📢 ประกาศตักเตือน\n${typeLabel} ${gang}\nเหตุผล : ${reason}\nเตือนครั้งที่ ${level}`;
+    let fivem = isMC 
+        ? `/gov ประกาศตักเตือน  MC : ${gang} เนื่องจาก ${reason} เตือนครั้งที่ ${level} รวม ตักเตือน ${level} ครั้ง ขอบคุณค่ะ/ครับ`
+        : `/gov ประกาศตักเตือน ${typeLabel} ${gang} เนื่องจาก ${reason} เตือนครั้งที่ ${level} รวม ตักเตือน ${level} ครั้ง ขอบคุณค่ะ/ครับ`;
+        
+    let discord = isMC
+        ? `📢 ประกาศตักเตือน\nMC : ${gang}\nเหตุผล : ${reason}\nเตือนครั้งที่ ${level}`
+        : `📢 ประกาศตักเตือน\n${typeLabel} ${gang}\nเหตุผล : ${reason}\nเตือนครั้งที่ ${level}`;
 
     // ถ้าเลือกครั้งที่ 3 ให้เปลี่ยนเป็น Blacklist
     if(level==3){
         if(status=="ยังไม่ชำระ"){
-            fivem=`/gov ประกาศ Blacklist ${typeLabel} ${gang} เนื่องจาก ${reason} ขอบคุณครับ/ค่ะ`;
+            fivem = isMC
+                ? `/gov ประกาศ Blacklist MC : ${gang} เนื่องจาก ${reason} ขอบคุณครับ/ค่ะ`
+                : `/gov ประกาศ Blacklist ${typeLabel} ${gang} เนื่องจาก ${reason} ขอบคุณครับ/ค่ะ`;
         }else{
-            fivem=`/gov ประกาศปลด Blacklist ${typeLabel} ${gang} เนื่องจาก ชำระแล้ว`;
+            fivem = isMC
+                ? `/gov ประกาศปลด Blacklist MC : ${gang} เนื่องจาก ชำระแล้ว`
+                : `/gov ประกาศปลด Blacklist ${typeLabel} ${gang} เนื่องจาก ชำระแล้ว`;
         }
-        discord=`#  ⛔  __ BLACKLIST __ ⛔\n\n\`\`\`diff\n${typeLabel} : ${gang}\nหัวข้อ : BLACKLIST ข้อที่ ${ruleText} เนื่องจาก ${reason}\n( เมื่อเวลา ${time()} น. วันที่ ${date()} )\nค่าปรับ : ${fine} TD\n${statusText}\n\`\`\`\n\n<@&1335511632587128954> <@&1364843875105243206>`;
+        
+        discord = isMC
+            ? `#  ⛔  __ BLACKLIST __ ⛔\n\n\`\`\`diff\nMC : ${gang}\nหัวข้อ : BLACKLIST ข้อที่ ${ruleText} เนื่องจาก ${reason}\n( เมื่อเวลา ${time()} น. วันที่ ${date()} )\nค่าปรับ : ${fine} TD\n${statusText}\n\`\`\`\n\n<@&1335511632587128954> <@&1364843875105243206>`
+            : `#  ⛔  __ BLACKLIST __ ⛔\n\n\`\`\`diff\n${typeLabel} : ${gang}\nหัวข้อ : BLACKLIST ข้อที่ ${ruleText} เนื่องจาก ${reason}\n( เมื่อเวลา ${time()} น. วันที่ ${date()} )\nค่าปรับ : ${fine} TD\n${statusText}\n\`\`\`\n\n<@&1335511632587128954> <@&1364843875105243206>`;
     }
 
     document.getElementById("warnFiveM").innerText=fivem;
@@ -683,8 +936,14 @@ window.cooldown = function(){
     let start=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
     let stop=end.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
     
-    let typeLabel = 'แก๊ง';
-    let text=`ประกาศ รบกวน ${typeLabel} ${gang} ออกจากพื้นที่โรงพยาบาลภายใน ระยะเวลา 10 นาที เริ่มตั้งแต่เวลา ${start} น. ถึง ${stop} น. ขอบคุณครับ/ค่ะ`;
+    // ตรวจสอบเงื่อนไขการแสดงผลชื่อของ MC หรือ แก๊ง ทั่วไป
+    let text = "";
+    if (type === 'mc' || gang.toUpperCase().includes('MC')) {
+        text = `ประกาศ รบกวน MC : ${gang} ออกจากพื้นที่โรงพยาบาลภายใน ระยะเวลา 10 นาที เริ่มตั้งแต่เวลา ${start} น. ถึง ${stop} น. ขอบคุณครับ/ค่ะ`;
+    } else {
+        text = `ประกาศ รบกวน แก๊ง ${gang} ออกจากพื้นที่โรงพยาบาลภายใน ระยะเวลา 10 นาที เริ่มตั้งแต่เวลา ${start} น. ถึง ${stop} น. ขอบคุณครับ/ค่ะ`;
+    }
+
     document.getElementById("coolFiveM").innerText="/gov "+text;
     document.getElementById("coolDiscord").innerText=`\`\`\`\n${text}\n\`\`\`\n<@&1335511632587128954> <@&1364843875105243206>`;
 }
@@ -707,13 +966,28 @@ window.copyText = async function(id,btn){
     btn.innerText="คัดลอกสำเร็จ ✓";
     btn.classList.add("success");
     
-    saveHistory(text);
+    // บันทึกประวัติเฉพาะหน้าประกาศตักเตือนเท่านั้น (เช็คจาก id ที่ส่งเข้ามา)
+    if(id === 'warnFiveM' || id === 'warnDiscord') {
+        saveHistory(text);
+        
+        // ปรับปรุงเงื่อนไขเพิ่ม: ทำการเซฟประวัติสถิติของตระกูลรายข้อแยกออกไปอีกหนึ่งตารางฐานข้อมูลทันทีเมื่อมีการกดคัดลอกหน้าตักเตือน
+        saveGangHistory();
+    }
     
     setTimeout(() => { 
         btn.innerText = "คัดลอก"; 
         btn.classList.remove("success");
     }, 2000);
 }
+
+// ผูกอีเวนต์เปลี่ยนค่าปรับเป็น 2,000,000 อัตโนมัติเมื่อเลือก ครั้งที่ 3 บนหน้า UI
+document.getElementById("warnLevel").addEventListener("change", function() {
+    if(this.value == 3) {
+        document.getElementById("fine").value = "2,000,000";
+    } else {
+        updateRules();
+    }
+});
 
 // --- เพิ่มระบบ Enter สำหรับบันทึกข้อมูล ---
 document.addEventListener('keydown', function(event) {
@@ -737,4 +1011,3 @@ showPage("warnPage");
 </script>
 
 </body>
-</html>
