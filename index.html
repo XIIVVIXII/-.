@@ -129,13 +129,13 @@
                         <h3 class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4">Gang Management</h3>
                         <div class="flex flex-col gap-3 mb-4">
                             <div class="flex gap-2">
-                                <div id="typeFam" class="type-btn active-fam" onclick="setGangType('fam')">🌸 FAMILY</div>
+                                <div id="typeMc" class="type-btn active-mc" onclick="setGangType('mc')">🏍️ MC THE LOST</div>
                                 <div id="typeGang" class="type-btn inactive" onclick="setGangType('gang')">🛡️ GANG</div>
                             </div>
                             <div class="flex gap-2">
-                               <input type="text" id="gangNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อตระกูลหลัก (เช่น BADPORYOUNG [214])">
-<input type="text" id="gangThaiNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อภาษาไทย (เช่น แบดโพยัง [214]) *ใส่หรือไม่ใส่ก็ได้*">
-<button onclick="addGang()" class="rule-btn whitespace-nowrap" id="addGangBtn" style="background:var(--primary)">เพิ่มตระกูล +</button>
+                               <input type="text" id="gangNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อตระกูลหลัก (เช่น MC THE LOST [214])">
+                               <input type="text" id="gangThaiNameInput" class="rule-input w-full md:w-1/2" placeholder="พิมพ์ชื่อภาษาไทย (เช่น เดอะลอส [214]) *ใส่หรือไม่ใส่ก็ได้*">
+                               <button onclick="addGang()" class="rule-btn whitespace-nowrap" id="addGangBtn" style="background:var(--primary)">เพิ่มตระกูล +</button>
                             </div>
                         </div>
                         <div id="gangListDisplay" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
@@ -225,6 +225,7 @@
         </div>
         <div class="mt-24 text-center text-[9px] text-gray-300 tracking-[0.4em] uppercase">Est. 2026 &bull; Time Town Project</div>
     </div>
+
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, set, child, update, remove, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -237,26 +238,21 @@
             appId: "1:154198162358:web:f16c1ffd840ceaa8845f17"
         };
 
-       const app = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
         const SUPER_ADMIN = "Jaokha";
         let currentUser = localStorage.getItem('portalUser') || null; 
         const thaiSort = (a, b) => a.localeCompare(b, 'th', { sensitivity: 'base' });
 
-        // --- เพิ่มตรงนี้ครับ ---
         let userData = {}; 
         if (currentUser) {
-            // ดึงข้อมูลสิทธิ์แบบ Real-time จาก Database
             onValue(ref(db, `portal_users/${currentUser}`), (snap) => {
                 userData = snap.val() || {};
-                // ถ้ามีฟังก์ชันที่ต้องอัปเดต UI ตามสิทธิ์ เช่น ปุ่มลบ หรือ ปุ่มปิดยอด
-                // สามารถสั่งให้ทำงานใหม่ตรงนี้ได้เลย (เช่น checkLockStatus() หรือ renderHistory())
                 if (typeof checkLockStatus === "function") checkLockStatus();
                 if (typeof renderHistory === "function") renderHistory();
             });
         }
-        // ------------------
 
         async function saveLog(action, detail, location = "หน้าหลัก") {
             push(ref(db, 'activity_logs'), {
@@ -480,10 +476,12 @@
             });
         }
 
-        let selectedGangType = 'fam';
+        // --- ส่วนระบบจัดการตระกูลสไตล์ MC (เพิ่มและลบได้ตามปกติ) ---
+
+        let selectedGangType = 'mc';
         window.setGangType = (t) => {
             selectedGangType = t;
-            document.getElementById('typeFam').className = t==='fam'?'type-btn active-fam':'type-btn inactive';
+            document.getElementById('typeMc').className = t==='mc'?'type-btn active-mc':'type-btn inactive';
             document.getElementById('typeGang').className = t==='gang'?'type-btn active-gang':'type-btn inactive';
         };
 
@@ -499,11 +497,10 @@
                 const gangs = snap.val();
                 if(gangs) Object.entries(gangs).sort((a,b)=>thaiSort(a[1].name||a[1], b[1].name||b[1])).forEach(([k,v])=>{
                     const name = v.name || v; 
-                    const isFam = v.type==='fam';
+                    const isMc = v.type==='mc';
                     const div = document.createElement('div'); 
-                    div.className = `flex justify-between items-center p-3 rounded-lg border ${isFam?'bg-blue-50 border-blue-100 text-blue-700':'bg-amber-50 border-amber-100 text-amber-700'}`;
+                    div.className = `flex justify-between items-center p-3 rounded-lg border ${isMc?'bg-blue-50 border-blue-100 text-blue-700':'bg-amber-50 border-amber-100 text-amber-700'}`;
                     
-                    // แทรกส่วนเช็กชื่อภาษาไทยและการแสดงผลสไตล์ตามที่คุณต้องการตรงนี้ครับ
                     div.innerHTML = `
                         <div>
                             <span class="text-xs font-bold uppercase">${name}</span>
@@ -516,18 +513,15 @@
             });
         }
 
-      window.addGang = async () => {
+        window.addGang = async () => {
             const name = document.getElementById('gangNameInput').value.trim();
-            const thaiName = document.getElementById('gangThaiNameInput').value.trim(); // ดึงค่าภาษาไทย
+            const thaiName = document.getElementById('gangThaiNameInput').value.trim(); 
             if(!name) return alert("กรุณากรอกชื่อตระกูลหลัก");
 
-            // แก้ไขจาก 'gangs' เป็น 'gang_list' เพื่อให้ตรงกับบอร์ดที่ระบบใช้ดึงข้อมูล (loadGangs)
             const id = push(ref(db, 'gang_list')).key;
             
-            // เปลี่ยนจาก currentGangType เป็น selectedGangType ให้ตรงกับปุ่มด้านบนที่ระบบใช้อยู่จริง
             await set(ref(db, `gang_list/${id}`), { id, name, thaiName: thaiName || "", type: selectedGangType }); 
             
-            // เคลียร์ค่าในช่องกรอกทั้งสองช่อง
             document.getElementById('gangNameInput').value = '';
             document.getElementById('gangThaiNameInput').value = '';
             saveLog("ADD_GANG", `Added ${selectedGangType}: ${name}`);
@@ -541,7 +535,36 @@
             confirm(`ลบ ${n}?`) && remove(ref(db, `gang_list/${k}`));
         };
 
-       async function loadMedicines() {
+
+      // ==========================================
+        // GANG MANAGEMENT SYSTEMS
+        // ==========================================
+        window.addGang = async () => {
+            const name = document.getElementById('gangNameInput').value.trim();
+            const thaiName = document.getElementById('gangThaiNameInput').value.trim(); 
+            if(!name) return alert("กรุณากรอกชื่อตระกูลหลัก");
+
+            const id = push(ref(db, 'gang_list')).key;
+            
+            await set(ref(db, `gang_list/${id}`), { id, name, thaiName: thaiName || "", type: selectedGangType }); 
+            
+            document.getElementById('gangNameInput').value = '';
+            document.getElementById('gangThaiNameInput').value = '';
+            saveLog("ADD_GANG", `Added ${selectedGangType}: ${name}`);
+        };
+
+        window.deleteGang = async (k, n) => {
+            const snap = await get(child(ref(db), `portal_users/${currentUser}`));
+            const u = snap.val();
+            const iCanDelete = (u && u.canDelete) || currentUser === SUPER_ADMIN;
+            if (!iCanDelete) return alert("คุณไม่มียศสำหรับลบข้อมูล");
+            confirm(`ลบ ${n}?`) && remove(ref(db, `gang_list/${k}`));
+        };
+
+        // ==========================================
+        // MEDICINE PRICE SYSTEMS
+        // ==========================================
+        async function loadMedicines() {
             onValue(ref(db, 'service_prices'), async (snap) => {
                 const display = document.getElementById('medicineListDisplay');
                 if(!display) return;
@@ -564,17 +587,17 @@
                         <div class="grid grid-cols-3 gap-2">
                             <div class="text-center p-2 bg-slate-50 rounded-lg">
                                 <div class="text-[9px] font-bold text-slate-400 uppercase">ประชาชน</div>
-                                <div class="text-xs font-bold" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'citizen')">${v.prices?.citizen || 0}</div>
+                                <div class="text-xs font-bold cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'citizen')">${v.prices?.citizen || 0}</div>
                                 <div class="text-[8px] text-slate-400 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'citizen')">${v.packs?.citizen || 0}</span></div>
                             </div>
                             <div class="text-center p-2 bg-blue-50 rounded-lg">
                                 <div class="text-[9px] font-bold text-blue-400 uppercase">แก๊ง</div>
-                                <div class="text-xs font-bold text-blue-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'gang')">${v.prices?.gang || 0}</div>
+                                <div class="text-xs font-bold text-blue-600 cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'gang')">${v.prices?.gang || 0}</div>
                                 <div class="text-[8px] text-blue-300 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'gang')">${v.packs?.gang || 0}</span></div>
                             </div>
                             <div class="text-center p-2 bg-pink-50 rounded-lg">
                                 <div class="text-[9px] font-bold text-pink-400 uppercase">แฟม</div>
-                                <div class="text-xs font-bold text-pink-600" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'fam')">${v.prices?.fam || 0}</div>
+                                <div class="text-xs font-bold text-pink-600 cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/prices', 'fam')">${v.prices?.fam || 0}</div>
                                 <div class="text-[8px] text-pink-300 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'service_prices/${k}/packs', 'fam')">${v.packs?.fam || 0}</span></div>
                             </div>
                         </div>`;
@@ -596,11 +619,13 @@
             const packF = document.getElementById('packFam').value || 0;
             let finalName = type === 'ยา' ? nameInput : type;
             if(!finalName) return alert("กรุณาระบุชื่อยา");
-            set(ref(db, `service_prices/${finalName}`), { 
+            
+            await set(ref(db, `service_prices/${finalName}`), { 
                 type, name: finalName, 
                 prices: { citizen: Number(citizen), gang: Number(gang), fam: Number(fam) },
                 packs: { citizen: Number(packC), gang: Number(packG), fam: Number(packF) }
             });
+            
             document.getElementById('medName').value = "";
             document.getElementById('pCitizen').value = ""; document.getElementById('pGang').value = ""; document.getElementById('pFam').value = "";
             document.getElementById('packCitizen').value = ""; document.getElementById('packGang').value = ""; document.getElementById('packFam').value = "";
@@ -614,6 +639,9 @@
             confirm(`ลบรายการนี้?`) && remove(ref(db, `service_prices/${k}`));
         };
 
+        // ==========================================
+        // MARKET ITEM SYSTEMS (FARM / MINE)
+        // ==========================================
         async function loadMarketItems() {
             onValue(ref(db, 'market_items'), async (snap) => {
                 const display = document.getElementById('marketListDisplay'); 
@@ -632,10 +660,10 @@
                             <div class="flex items-center gap-4">
                                 <div class="text-right">
                                     <div class="price-label">ราคาเรท</div>
-                                    <div class="editable-value text-lg" onclick="startInlineEdit(this, 'market_items/${k}', 'rate')">${v.rate}</div>
+                                    <div class="editable-value text-lg cursor-pointer" onclick="startInlineEdit(this, 'market_items/${k}', 'rate')">${v.rate}</div>
                                     <div class="text-[9px] text-slate-400 mt-1">แพ็คละ: <span class="cursor-pointer" onclick="startInlineEdit(this, 'market_items/${k}', 'pack')">${v.pack || 0}</span></div>
                                 </div>
-                                ${iCanDelete ? `<button onclick="deleteMarketItem('${k}')" class="text-red-300">✕</button>` : ''}
+                                ${iCanDelete ? `<button onclick="deleteMarketItem('${k}')" class="text-red-300 hover:text-red-500">✕</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -652,7 +680,8 @@
             const rate = document.getElementById('marketRate').value;
             const pack = document.getElementById('marketPack').value;
             if(!name || !rate) return alert("ระบุชื่อและราคา");
-            set(ref(db, `market_items/${name}`), { name, category: cat, rate: Number(rate), pack: Number(pack||0) });
+            
+            await set(ref(db, `market_items/${name}`), { name, category: cat, rate: Number(rate), pack: Number(pack||0) });
             document.getElementById('marketItemName').value = ""; document.getElementById('marketRate').value = ""; document.getElementById('marketPack').value = "";
         };
 
@@ -664,33 +693,47 @@
             confirm(`ลบ ${k}?`) && remove(ref(db, `market_items/${k}`));
         };
 
+        // ==========================================
+        // INLINE EDIT CORE ENGINE
+        // ==========================================
         window.startInlineEdit = async (element, dbPath, fieldPath) => {
             const snap = await get(child(ref(db), `portal_users/${currentUser}`));
             if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับแก้ไขข้อมูล");
+            
             const oldValue = element.innerText;
             const originalElement = element.cloneNode(true);
             const input = document.createElement('input');
-            input.type = 'number'; input.value = oldValue; input.className = 'edit-input';
+            input.type = 'number'; 
+            input.value = oldValue; 
+            input.className = 'edit-input w-20 text-center border rounded p-1 text-sm text-slate-800';
+            
             element.replaceWith(input);
-            input.focus(); input.select();
+            input.focus(); 
+            input.select();
+            
             let isFinished = false;
             const finishEdit = async () => {
-                if (isFinished) return; isFinished = true;
+                if (isFinished) return; 
+                isFinished = true;
                 const newValue = Number(input.value);
                 if (!isNaN(newValue) && newValue !== Number(oldValue)) {
                     await update(ref(db, dbPath), { [fieldPath]: newValue });
                     saveLog("INLINE_EDIT", `Updated ${dbPath}/${fieldPath} to ${newValue}`);
+                    originalElement.innerText = newValue;
                 }
                 input.replaceWith(originalElement);
-                originalElement.innerText = newValue;
             };
+            
             input.onblur = finishEdit;
             input.onkeydown = (e) => { 
                 if (e.key === 'Enter') finishEdit(); 
-                if (e.key === 'Escape') { isFinished=true; input.replaceWith(originalElement); } 
+                if (e.key === 'Escape') { isFinished = true; input.replaceWith(originalElement); } 
             };
         };
 
+        // ==========================================
+        // LAW & RULE SYSTEMS
+        // ==========================================
         window.addRule = async () => {
             const snap = await get(child(ref(db), `portal_users/${currentUser}`));
             if (!snap.val()?.canEdit && currentUser !== SUPER_ADMIN) return alert("คุณไม่มียศสำหรับบันทึกข้อมูล");
@@ -713,9 +756,9 @@
             const newRuleRef = push(ref(db, 'rule_list'));
             await set(newRuleRef, ruleData);
             
-            document.getElementById('ruleNo').value=""; 
-            document.getElementById('ruleDetail').value=""; 
-            document.getElementById('ruleFine').value="";
+            document.getElementById('ruleNo').value = ""; 
+            document.getElementById('ruleDetail').value = ""; 
+            document.getElementById('ruleFine').value = "";
             alert("บันทึกกฎข้อที่ " + no + " เรียบร้อยแล้ว!");
         };
 
@@ -733,7 +776,7 @@
                     const sortedRules = Object.entries(rules).sort((a, b) => a[1].no - b[1].no);
                     sortedRules.forEach(([key, r]) => {
                         const div = document.createElement('div'); 
-                        div.className = "rule-item";
+                        div.className = "rule-item flex justify-between items-center p-3 border-b border-slate-100 hover:bg-slate-50";
                         div.innerHTML = `
                             <div>
                                 <span class="font-bold text-blue-500 mr-2">ข้อ ${r.no}</span> 
@@ -760,4 +803,4 @@
             }
         };
 
-    </script>
+</script>
